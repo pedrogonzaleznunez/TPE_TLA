@@ -102,3 +102,32 @@ constant: INTEGER											{ $$ = IntegerConstantSemanticAction($1); }
 	;
 
 %%
+
+/* Aca va lo nuestro
+
+%start program
+
+%%
+
+program: 
+	hardware_block routine_block
+	;
+
+hardware_block:
+	HARDWARE OPEN_BRACE led_decl CLOSE_BRACE
+	;
+
+led_decl:
+	LED IDENTIFIER ON INTEGER SEMICOLON
+	;
+
+routine_block:
+	ROUTINE OPEN_BRACE turn_on_stmt CLOSE_BRACE
+	;
+
+turn_on_stmt:
+	IDENTIFIER DOT TURN_ON OPEN_PARENTHESIS CLOSE_PARENTHESIS SEMICOLON
+	;
+
+%%
+*/
