@@ -11,8 +11,17 @@
 #include "../../support/type/Token.h"
 #include "../../support/type/TokenLabel.h"
 #include "../Frontend.h"
+#include <stdbool.h>
 
 /** Initialize module's internal state. */
-ModuleDestructor initializeFlexActionsModule();
+ModuleDestructor initializeFlexActionsModule(LexicalAnalyzer * lexicalAnalyzer);
+
+CompilationStatus SimpleTokenLexemeAction(TokenLabel label);
+CompilationStatus IdentifierLexemeAction();
+CompilationStatus IntegerLexemeAction();
+CompilationStatus FloatLexemeAction();
+CompilationStatus StringLexemeAction();
+CompilationStatus BooleanLexemeAction(const bool value);
+CompilationStatus TimeLexemeAction();
 
 #endif
