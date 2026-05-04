@@ -1,0 +1,8 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  var x = 1;
+  x = ;
+}

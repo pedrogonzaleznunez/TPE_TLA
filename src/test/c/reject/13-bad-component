@@ -1,0 +1,6 @@
+hardware {
+  motor drive on 2;
+}
+
+routine {
+}

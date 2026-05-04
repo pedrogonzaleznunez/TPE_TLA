@@ -1,0 +1,8 @@
+hardware {
+  lcd screen on 10;
+}
+
+routine {
+  var text = "hello\nworld";
+  screen.print(text);
+}

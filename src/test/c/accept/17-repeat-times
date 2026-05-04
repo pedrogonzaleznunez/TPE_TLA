@@ -1,0 +1,9 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  repeat 5 times {
+    status.on(1);
+  }
+}

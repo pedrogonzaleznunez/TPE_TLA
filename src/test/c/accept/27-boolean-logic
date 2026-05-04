@@ -1,0 +1,10 @@
+hardware {
+}
+
+routine {
+  var ok = true;
+  var fail = false;
+  if (ok and not fail) {
+    wait 1s;
+  }
+}

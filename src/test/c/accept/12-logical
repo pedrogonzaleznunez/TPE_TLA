@@ -1,0 +1,10 @@
+hardware {
+}
+
+routine {
+  var x = 1;
+  var y = 2;
+  if (not (x == y) or (x <= y)) {
+    wait 200ms;
+  }
+}

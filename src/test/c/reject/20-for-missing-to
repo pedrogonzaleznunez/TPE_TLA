@@ -1,0 +1,8 @@
+hardware {
+}
+
+routine {
+  for i from 0 10 {
+    wait 1s;
+  }
+}

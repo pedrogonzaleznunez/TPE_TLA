@@ -1,0 +1,6 @@
+hardware {
+  servo on 9;
+}
+
+routine {
+}

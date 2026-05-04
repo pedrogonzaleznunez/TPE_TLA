@@ -1,0 +1,6 @@
+hardware {
+  ultrasonic radar on (trig: 9, echo 10);
+}
+
+routine {
+}

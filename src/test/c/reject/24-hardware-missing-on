@@ -1,0 +1,6 @@
+hardware {
+  led status 2;
+}
+
+routine {
+}

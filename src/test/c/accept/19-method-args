@@ -1,0 +1,8 @@
+hardware {
+  servo barrier on 9;
+}
+
+routine {
+  var angle = 45;
+  barrier.move(angle, angle + 45, 90);
+}

@@ -1,0 +1,13 @@
+hardware {
+  led status on 2;
+  buzzer alarm on 3;
+  button start on 4;
+  potentiometer knob on 5;
+  servo gate on 6;
+  ultrasonic radar on (trig: 7, echo: 8);
+  dht11 climate on 9;
+  lcd display on 10;
+}
+
+routine {
+}

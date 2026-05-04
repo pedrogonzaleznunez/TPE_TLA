@@ -1,0 +1,10 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  var value = -10;
+  if (not (value == 0)) {
+    status.on(1);
+  }
+}

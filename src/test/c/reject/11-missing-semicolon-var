@@ -1,0 +1,7 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  var speed = 10
+}

@@ -1,0 +1,8 @@
+hardware {
+}
+
+routine {
+  repeat every {
+    wait 1s;
+  }
+}

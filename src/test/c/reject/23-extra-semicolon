@@ -1,0 +1,6 @@
+hardware {
+}
+
+routine {
+  wait 1s;;
+}

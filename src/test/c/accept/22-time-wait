@@ -1,0 +1,8 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  wait 200ms;
+  wait 2s;
+}

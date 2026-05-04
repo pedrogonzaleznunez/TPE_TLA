@@ -1,0 +1,6 @@
+hardware {
+}
+
+routine {
+  var x = 1
+}

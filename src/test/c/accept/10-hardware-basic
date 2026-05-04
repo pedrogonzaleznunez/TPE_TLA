@@ -1,0 +1,7 @@
+hardware {
+  led status on 9;
+  buzzer alarm on 3;
+}
+
+routine {
+}

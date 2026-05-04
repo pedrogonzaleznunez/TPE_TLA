@@ -1,0 +1,29 @@
+hardware {
+  servo barrier on 9;
+  ultrasonic radar on (trig: 9, echo: 10);
+}
+
+routine {
+  var speed = 23;
+  var ratio = 3.14;
+  var active = true;
+  var label = "hello";
+
+  if (active and (speed > 10)) {
+    barrier.move(90);
+  } else {
+    wait 2s;
+  }
+
+  repeat every 200ms {
+    barrier.move(speed);
+  }
+
+  repeat 3 times {
+    radar.read_distance();
+  }
+
+  for i from 0 to 10 {
+    radar.read_distance();
+  }
+}

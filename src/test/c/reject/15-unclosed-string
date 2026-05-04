@@ -1,0 +1,7 @@
+hardware {
+  lcd screen on 8;
+}
+
+routine {
+  var text = "hello;
+}

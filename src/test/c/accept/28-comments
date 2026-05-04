@@ -1,0 +1,11 @@
+hardware {
+  /* comment */
+  led status on 2;
+}
+
+routine {
+  /* multi
+     line
+     comment */
+  status.on(1);
+}

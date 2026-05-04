@@ -1,0 +1,10 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  var v = 1 + 2 * 3 - 4 / 2;
+  if ((v > 3) or (v == 3 and not false)) {
+    status.on(v);
+  }
+}

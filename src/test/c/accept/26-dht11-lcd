@@ -1,0 +1,8 @@
+hardware {
+  dht11 climate on 4;
+  lcd screen on 8;
+}
+
+routine {
+  screen.print(climate.temperature());
+}

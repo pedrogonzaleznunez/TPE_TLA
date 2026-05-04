@@ -1,0 +1,9 @@
+hardware {
+  buzzer alarm on 3;
+}
+
+routine {
+  repeat every 1s {
+    alarm.beep(1);
+  }
+}

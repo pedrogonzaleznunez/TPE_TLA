@@ -1,0 +1,12 @@
+hardware {
+  led status on 2;
+}
+
+routine {
+  var speed = 10;
+  if (speed >= 10 and speed < 20) {
+    status.on(1);
+  } else {
+    status.on(0);
+  }
+}
