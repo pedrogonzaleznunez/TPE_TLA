@@ -136,7 +136,7 @@ CompilationStatus EnterImportExpressionLexemeAction(FlexContext context) {
 
 CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context) {
 	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, OPEN_COMMENT);
+		Token * token = createToken(_lexicalAnalyzer, 0);
 		_logTokenAction(__FUNCTION__, token);
 		destroyToken(token);
 	}
@@ -162,7 +162,7 @@ CompilationStatus EOFLexemeAction() {
 
 CompilationStatus IgnoredLexemeAction() {
 	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, IGNORED);
+		Token * token = createToken(_lexicalAnalyzer, 0);
 		_logTokenAction(__FUNCTION__, token);
 		destroyToken(token);
 	}
@@ -237,7 +237,7 @@ CompilationStatus LeaveImportExpressionLexemeAction() {
 CompilationStatus LeaveMultilineCommentLexemeAction() {
 	leaveLexicalAnalyzerContext(_lexicalAnalyzer);
 	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, CLOSE_COMMENT);
+		Token * token = createToken(_lexicalAnalyzer, 0);
 		_logTokenAction(__FUNCTION__, token);
 		destroyToken(token);
 	}
@@ -253,7 +253,7 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 }
 
 CompilationStatus SubexpressionLexemeAction() {
-	Token * token = createToken(_lexicalAnalyzer, IGNORED);
+	Token * token = createToken(_lexicalAnalyzer, 0);
 	_inputBuffer = createInputBuffer(_lexicalAnalyzer, token->lexeme);
 	if (_logIgnoredLexemes) {
 		_logTokenAction(__FUNCTION__, token);
@@ -263,7 +263,7 @@ CompilationStatus SubexpressionLexemeAction() {
 }
 
 CompilationStatus UnknownLexemeAction() {
-	Token * token = createToken(_lexicalAnalyzer, UNKNOWN);
+	Token * token = createToken(_lexicalAnalyzer, 0);
 	_logTokenAction(__FUNCTION__, token);
 	destroyToken(token);
 	return FAILED;

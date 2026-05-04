@@ -28,7 +28,7 @@ const int main(const int length, const char ** arguments) {
 		initializeFrontendModule(lexicalAnalyzer)
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
-	Program * program = compilerState.abstractSyntaxtTree;
+	EzProgram * program = (EzProgram *) compilerState.abstractSyntaxtTree;
 	if (compilationStatus == SUCCEEDED) {
 		logDebugging(logger, "Frontend completed successfully.");
 	}
@@ -37,7 +37,7 @@ const int main(const int length, const char ** arguments) {
 		compilationStatus = FAILED;
 	}
 	logDebugging(logger, "Releasing AST resources...");
-	destroyProgram(program);
+	destroyEzProgram(program);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();
 	}
