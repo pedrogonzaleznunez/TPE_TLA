@@ -68,3 +68,52 @@ void destroyProgram(Program * program) {
 		free(program);
 	}
 }
+
+// EZduino AST construnctors
+
+EzLiteral * createEzIntLiteral(int value) {
+	EzLiteral * literal = calloc(1, sizeof(EzLiteral));
+	literal->type = EZ_LIT_INT;
+	literal->intValue = value;
+	return literal;
+}
+
+EzLiteral * createEzFloatLiteral(double value) {
+	EzLiteral * literal = calloc(1, sizeof(EzLiteral));
+	literal->type = EZ_LIT_FLOAT;
+	literal->floatValue = value;
+	return literal;
+}
+
+EzLiteral * createEzBoolLiteral(bool value) {
+	EzLiteral * literal = calloc(1, sizeof(EzLiteral));
+	literal->type = EZ_LIT_BOOL;
+	literal->boolValue = value;
+	return literal;
+}
+
+EzLiteral * createEzStringLiteral(char * value) {
+	EzLiteral * literal = calloc(1, sizeof(EzLiteral));
+	literal->type = EZ_LIT_STRING;
+	literal->stringValue = value;
+	return literal;
+}
+
+EzLiteral * createEzTimeLiteral(EzTimeValue value) {
+	EzLiteral * literal = calloc(1, sizeof(EzLiteral));
+	literal->type = EZ_LIT_TIME;
+	literal->timeValue = value;
+	return literal;
+}
+
+// EZduino AST destructors
+
+void destroyEzLiteral(EzLiteral * literal) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (literal != NULL) {
+		if (literal->type == EZ_LIT_STRING) {
+			free(literal->stringValue);
+		}
+		free(literal);
+	}
+}

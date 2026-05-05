@@ -23,4 +23,12 @@ Factor * ConstantFactorSemanticAction(Constant * constant);
 Factor * ExpressionFactorSemanticAction(Expression * expression);
 Program * ExpressionProgramSemanticAction(Expression * expression);
 
+// EZduino semantic actions.
+
+EzLiteral * EzIntLiteralSemanticAction(int value);
+EzLiteral * EzFloatLiteralSemanticAction(double value);
+EzLiteral * EzBoolLiteralSemanticAction(bool value);
+EzLiteral * EzStringLiteralSemanticAction(char * value);
+EzLiteral * EzTimeLiteralSemanticAction(EzTimeValue value);
+
 #endif

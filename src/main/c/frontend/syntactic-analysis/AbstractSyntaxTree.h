@@ -75,4 +75,52 @@ void destroyExpression(Expression * expression);
 void destroyFactor(Factor * factor);
 void destroyProgram(Program * program);
 
+// EZduino AST types
+
+typedef enum EzLiteralType EzLiteralType;
+typedef enum EzTimeUnit EzTimeUnit;
+
+typedef struct EzLiteral EzLiteral;
+
+enum EzTimeUnit {
+	EZ_TIME_MS,
+	EZ_TIME_S
+};
+
+typedef struct {
+	int value;
+	EzTimeUnit unit;
+} EzTimeValue;
+
+enum EzLiteralType {
+	EZ_LIT_INT,
+	EZ_LIT_FLOAT,
+	EZ_LIT_BOOL,
+	EZ_LIT_STRING,
+	EZ_LIT_TIME
+};
+
+struct EzLiteral {
+	EzLiteralType type;
+	union {
+		int intValue;
+		double floatValue;
+		bool boolValue;
+		char * stringValue;
+		EzTimeValue timeValue;
+	};
+};
+
+// EZduino AST constructors
+
+EzLiteral * createEzIntLiteral(int value);
+EzLiteral * createEzFloatLiteral(double value);
+EzLiteral * createEzBoolLiteral(bool value);
+EzLiteral * createEzStringLiteral(char * value);
+EzLiteral * createEzTimeLiteral(EzTimeValue value);
+
+// EZduino AST destructors
+
+void destroyEzLiteral(EzLiteral * literal);
+
 #endif
