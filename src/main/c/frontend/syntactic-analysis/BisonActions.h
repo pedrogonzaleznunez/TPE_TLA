@@ -7,20 +7,48 @@
 #include "../../support/type/TokenLabel.h"
 #include "AbstractSyntaxTree.h"
 #include "BisonParser.h"
+#include <stdbool.h>
 #include <stdlib.h>
 
-/** Initialize module's internal state. */
-ModuleDestructor initializeBisonActionsModule();
+ModuleDestructor initializeBisonActionsModule(CompilerState * compilerState);
 
-/**
- * Bison semantic actions.
- */
+/* Hardware */
+Pin DigitalPinSemanticAction(int number);
+Pin AnalogPinSemanticAction(int number);
+HardwareDecl * SimpleHardwareDeclSemanticAction(HwDeviceType device, char * name, Pin pin);
+HardwareDecl * UltrasonicHardwareDeclSemanticAction(char * name, Pin trig, Pin echo);
+HardwareDecl * LcdHardwareDeclSemanticAction(char * name);
+HardwareDecl * AppendHardwareDeclSemanticAction(HardwareDecl * list, HardwareDecl * decl);
+HardwareBlock * HardwareBlockSemanticAction(HardwareDecl * decls);
 
-Constant * IntegerConstantSemanticAction(const int value);
-Expression * ArithmeticExpressionSemanticAction(Expression * leftExpression, Expression * rightExpression, ExpressionType type);
-Expression * FactorExpressionSemanticAction(Factor * factor);
-Factor * ConstantFactorSemanticAction(Constant * constant);
-Factor * ExpressionFactorSemanticAction(Expression * expression);
-Program * ExpressionProgramSemanticAction(Expression * expression);
+/* Routine */
+RoutineBlock * RoutineBlockSemanticAction(StmtList * stmts);
+
+/* Statements */
+StmtList * AppendStmtSemanticAction(StmtList * list, Stmt * stmt);
+Stmt * CallStmtSemanticAction(char * object, char * method, ArgList * args);
+Stmt * VarStmtSemanticAction(char * name, Expr * value);
+Stmt * IfStmtSemanticAction(Expr * cond, StmtList * thenBranch, StmtList * elseBranch);
+Stmt * RepeatEveryStmtSemanticAction(StmtList * body, int intervalMs);
+Stmt * WaitStmtSemanticAction(int delayMs);
+Stmt * ForRangeStmtSemanticAction(char * varName, Expr * from, Expr * to, StmtList * body);
+
+/* Expressions */
+ArgList * SingleArgSemanticAction(Expr * expr);
+ArgList * AppendArgSemanticAction(ArgList * list, Expr * expr);
+Expr * BinaryExprSemanticAction(Expr * left, Operator op, Expr * right);
+Expr * UnaryExprSemanticAction(Operator op, Expr * operand);
+Expr * IdentifierExprSemanticAction(char * name);
+Expr * MemberExprSemanticAction(char * object, char * member);
+Expr * CallExprSemanticAction(char * object, char * method, ArgList * args);
+Expr * IntegerExprSemanticAction(int value);
+Expr * FloatExprSemanticAction(double value);
+Expr * StringExprSemanticAction(char * value);
+Expr * BoolExprSemanticAction(bool value);
+Expr * TimeExprSemanticAction(int timeMs);
+Expr * AnalogPinExprSemanticAction(int pin);
+
+/* Program */
+Program * ProgramSemanticAction(HardwareBlock * hardware, RoutineBlock * routine);
 
 #endif
