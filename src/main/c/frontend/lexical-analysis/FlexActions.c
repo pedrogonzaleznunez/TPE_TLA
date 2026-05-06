@@ -1,5 +1,9 @@
 #include "FlexActions.h"
 
+#include <ctype.h>
+#include <errno.h>
+#include <string.h>
+
 /* MODULE INTERNAL STATE */
 
 static bool _logIgnoredLexemes = true;
@@ -33,6 +37,10 @@ ModuleDestructor initializeFlexActionsModule(LexicalAnalyzer * lexicalAnalyzer) 
 
 static void _logTokenAction(const char * actionName, Token * token);
 
+static char * _copyString(const char * source);
+static char * _unquoteStringLiteral(const char * lexeme);
+static int _parseTimeMs(const char * lexeme);
+
 /**
  * Logs a lexical-analyzer action over a token in DEBUGGING level.
  */
@@ -50,6 +58,59 @@ static void _logTokenAction(const char * actionName, Token * token) {
 	_lexeme = NULL;
 }
 
+static char * _copyString(const char * source) {
+	if (source == NULL) {
+		return NULL;
+	}
+	size_t length = strlen(source);
+	char * copy = (char *) calloc(length + 1, sizeof(char));
+	if (copy == NULL) {
+		return NULL;
+	}
+	memcpy(copy, source, length);
+	copy[length] = '\0';
+	return copy;
+}
+
+static char * _unquoteStringLiteral(const char * lexeme) {
+	if (lexeme == NULL) {
+		return NULL;
+	}
+	size_t length = strlen(lexeme);
+	if (length < 2 || lexeme[0] != '"' || lexeme[length - 1] != '"') {
+		return _copyString(lexeme);
+	}
+	// Minimal unquote (keeps escapes as-is for now).
+	size_t innerLength = length - 2;
+	char * unquoted = (char *) calloc(innerLength + 1, sizeof(char));
+	if (unquoted == NULL) {
+		return NULL;
+	}
+	memcpy(unquoted, lexeme + 1, innerLength);
+	unquoted[innerLength] = '\0';
+	return unquoted;
+}
+
+static int _parseTimeMs(const char * lexeme) {
+	if (lexeme == NULL) {
+		return 0;
+	}
+	size_t length = strlen(lexeme);
+	if (length < 2) {
+		return 0;
+	}
+
+	// Supports: <digits>ms, <digits>s
+	if (length >= 3 && strcmp(lexeme + (length - 2), "ms") == 0) {
+		return atoi(lexeme);
+	}
+	if (lexeme[length - 1] == 's') {
+		int seconds = atoi(lexeme);
+		return seconds * 1000;
+	}
+	return 0;
+}
+
 /* PUBLIC FUNCTIONS */
 
 CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label) {
@@ -60,22 +121,7 @@ CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label) {
 	return status;
 }
 
-CompilationStatus EnterImportExpressionLexemeAction(FlexContext context) {
-	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, OPEN_BRACE);
-		_logTokenAction(__FUNCTION__, token);
-		destroyToken(token);
-	}
-	enterLexicalAnalyzerContext(_lexicalAnalyzer, context);
-	return IN_PROGRESS;
-}
-
 CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context) {
-	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, OPEN_COMMENT);
-		_logTokenAction(__FUNCTION__, token);
-		destroyToken(token);
-	}
 	enterLexicalAnalyzerContext(_lexicalAnalyzer, context);
 	return IN_PROGRESS;
 }
@@ -114,28 +160,59 @@ CompilationStatus IntegerLexemeAction() {
 	return status;
 }
 
-CompilationStatus LeaveImportExpressionLexemeAction() {
-	pushInputBuffer(_inputBuffer);
-	leaveLexicalAnalyzerContext(_lexicalAnalyzer);
-	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, CLOSE_BRACE);
-		_logTokenAction(__FUNCTION__, token);
-		destroyToken(token);
-	}
-	return IN_PROGRESS;
+CompilationStatus FloatLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, FLOAT);
+	errno = 0;
+	token->semanticValue->number = strtod(token->lexeme, NULL);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
 }
 
-CompilationStatus LeaveMultilineCommentLexemeAction() {
-	leaveLexicalAnalyzerContext(_lexicalAnalyzer);
-	if (_logIgnoredLexemes) {
-		Token * token = createToken(_lexicalAnalyzer, CLOSE_COMMENT);
-		_logTokenAction(__FUNCTION__, token);
-		destroyToken(token);
-	}
-	return IN_PROGRESS;
+CompilationStatus IdentifierLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, IDENTIFIER);
+	// Copy lexeme because the token is destroyed after pushing.
+	token->semanticValue->string = _copyString(token->lexeme);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
 }
 
-CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
+CompilationStatus StringLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, STRING);
+	token->semanticValue->string = _unquoteStringLiteral(token->lexeme);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}
+
+CompilationStatus TimeLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, TIME);
+	token->semanticValue->timeMs = _parseTimeMs(token->lexeme);
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}
+
+CompilationStatus AnalogPinLexemeAction() {
+	Token * token = createToken(_lexicalAnalyzer, ANALOG_PIN);
+	// Expects lexeme like "A0".."A5".
+	int pin = 0;
+	if (token->lexeme != NULL && strlen(token->lexeme) >= 2) {
+		pin = token->lexeme[1] - '0';
+	}
+	token->semanticValue->analogPin = pin;
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}
+
+CompilationStatus TokenLexemeAction(TokenLabel label) {
 	Token * token = createToken(_lexicalAnalyzer, label);
 	_logTokenAction(__FUNCTION__, token);
 	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
@@ -143,13 +220,8 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 	return status;
 }
 
-CompilationStatus SubexpressionLexemeAction() {
-	Token * token = createToken(_lexicalAnalyzer, IGNORED);
-	_inputBuffer = createInputBuffer(_lexicalAnalyzer, token->lexeme);
-	if (_logIgnoredLexemes) {
-		_logTokenAction(__FUNCTION__, token);
-	}
-	destroyToken(token);
+CompilationStatus LeaveMultilineCommentLexemeAction() {
+	leaveLexicalAnalyzerContext(_lexicalAnalyzer);
 	return IN_PROGRESS;
 }
 

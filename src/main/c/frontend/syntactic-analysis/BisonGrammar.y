@@ -4,6 +4,8 @@
 #include "AbstractSyntaxTree.h"
 #include "BisonActions.h"
 
+#include <stdlib.h>
+
 /**
  * The error reporting function for Bison parser.
  *
@@ -27,6 +29,10 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 	/** Terminals. */
 
 	signed int integer;
+	double number;
+	int timeMs;
+	int analogPin;
+	char * string;
 	TokenLabel token;
 
 	/** Non-terminals. */
@@ -48,19 +54,29 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %destructor { destroyConstant($$); } <constant>
 %destructor { destroyExpression($$); } <expression>
 %destructor { destroyFactor($$); } <factor>
+%destructor { free($$); } <string>
 
 /** Terminals. */
+%token <token> HARDWARE ROUTINE VAR IF ELSE REPEAT EVERY WAIT FOR FROM TO TIMES ON
+
+%token <token> KW_LED KW_BUZZER KW_BUTTON KW_POTENTIOMETER KW_SERVO KW_ULTRASONIC KW_DHT11 KW_LCD
+%token <token> KW_TRIG KW_ECHO
+
+%token <token> TRUE FALSE
+%token <token> AND OR NOT
+
+%token <token> PLUS MINUS STAR SLASH
+%token <token> ASSIGN
+%token <token> EQ NE LT GT LE GE
+
+%token <token> LBRACE RBRACE LPAREN RPAREN SEMI COMMA COLON DOT
+
 %token <integer> INTEGER
-%token <token> ADD
-%token <token> CLOSE_BRACE
-%token <token> CLOSE_COMMENT
-%token <token> CLOSE_PARENTHESIS
-%token <token> DIV
-%token <token> MUL
-%token <token> OPEN_BRACE
-%token <token> OPEN_COMMENT
-%token <token> OPEN_PARENTHESIS
-%token <token> SUB
+%token <number> FLOAT
+%token <timeMs> TIME
+%token <analogPin> ANALOG_PIN
+%token <string> IDENTIFIER
+%token <string> STRING
 
 %token <token> IGNORED
 %token <token> UNKNOWN
@@ -77,8 +93,8 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  * @see https://en.cppreference.com/w/cpp/language/operator_precedence.html
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
-%left ADD SUB
-%left MUL DIV
+%left PLUS MINUS
+%left STAR SLASH
 
 %%
 
@@ -87,14 +103,14 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
 	;
 
-expression: expression[left] ADD expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }
-	| expression[left] DIV expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, DIVISION); }
-	| expression[left] MUL expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, MULTIPLICATION); }
-	| expression[left] SUB expression[right]				{ $$ = ArithmeticExpressionSemanticAction($left, $right, SUBTRACTION); }
+expression: expression[left] PLUS expression[right]		{ $$ = ArithmeticExpressionSemanticAction($left, $right, ADDITION); }
+	| expression[left] SLASH expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, DIVISION); }
+	| expression[left] STAR expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, MULTIPLICATION); }
+	| expression[left] MINUS expression[right]			{ $$ = ArithmeticExpressionSemanticAction($left, $right, SUBTRACTION); }
 	| factor												{ $$ = FactorExpressionSemanticAction($1); }
 	;
 
-factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS		{ $$ = ExpressionFactorSemanticAction($2); }
+factor: LPAREN expression RPAREN							{ $$ = ExpressionFactorSemanticAction($2); }
 	| constant												{ $$ = ConstantFactorSemanticAction($1); }
 	;
 
