@@ -356,26 +356,27 @@ Program * ProgramSemanticAction(HardwareBlock * hardware, RoutineBlock * routine
 // EZduino semantic actions.
 
 EzLiteral * EzIntLiteralSemanticAction(int value) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
+	_log(__FUNCTION__);
 	return createEzIntLiteral(value);
 }
 
 EzLiteral * EzFloatLiteralSemanticAction(double value) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
+	_log(__FUNCTION__);
 	return createEzFloatLiteral(value);
 }
 
 EzLiteral * EzBoolLiteralSemanticAction(bool value) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
+	_log(__FUNCTION__);
 	return createEzBoolLiteral(value);
 }
 
 EzLiteral * EzStringLiteralSemanticAction(char * value) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
+	_log(__FUNCTION__);
 	return createEzStringLiteral(value);
 }
 
 EzLiteral * EzTimeLiteralSemanticAction(EzTimeValue value) {
-	_logSyntacticAnalyzerAction(__FUNCTION__);
+	_log(__FUNCTION__);
 	return createEzTimeLiteral(value);
 }
+refactor: simplify logging in EZduino semantic actions
