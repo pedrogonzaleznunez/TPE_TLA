@@ -1,0 +1,10 @@
+// Metodo incompatible con el tipo de componente
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: read_distance() no es un metodo valido para componente led
+hardware {
+    led alert_light on 13;
+}
+routine {
+    var dist = alert_light.read_distance();
+}

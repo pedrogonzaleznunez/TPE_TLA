@@ -1,3 +1,4 @@
+// Cubre: bucle for range, servo
 hardware {
     servo barrier on 9;
 }

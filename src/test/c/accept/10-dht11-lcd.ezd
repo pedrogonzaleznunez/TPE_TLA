@@ -1,3 +1,4 @@
+// Cubre: repeat every con var y llamadas anidadas, dos componentes
 hardware {
     dht11 climate_sensor on 4;
     lcd screen on (12, 11, 5, 4, 3, 2);

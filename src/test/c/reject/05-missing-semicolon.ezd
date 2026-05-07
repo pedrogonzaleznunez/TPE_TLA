@@ -1,5 +1,6 @@
 // Falta el punto y coma al final de la declaracion — error sintactico puro
-// STAGE II: debe rechazar 
+// STAGE II: rechaza
+// Motivo: toda declaracion de hardware termina con punto y coma
 hardware {
     led alert_light on 13
 }

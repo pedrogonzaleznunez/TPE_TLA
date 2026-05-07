@@ -1,5 +1,6 @@
 // Llamada a metodo sin punto — error sintactico puro
-// STAGE II: debe rechazar 
+// STAGE II: rechaza 
+// Motivo: la sintaxis de llamada a metodo es: objeto.metodo(args)
 hardware {
     led alert_light on 13;
 }

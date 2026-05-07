@@ -1,5 +1,6 @@
 // Falta el identificador del componente — error sintactico puro
-// STAGE II: debe rechazar 
+// STAGE II: rechaza
+// Motivo: la declaracion de hardware requiere: tipo IDENTIFICADOR on pin;
 hardware {
     led on 13;
 }

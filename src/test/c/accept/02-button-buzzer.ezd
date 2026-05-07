@@ -1,3 +1,4 @@
+// Cubre: if/else, multiples componentes, comparacion con bool
 hardware {
     button start on 2;
     buzzer alarm on 8;

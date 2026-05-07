@@ -1,6 +1,7 @@
 // Operacion entre tipos incompatibles (string + time_literal)
-// STAGE II: acepta (+ en la gramatica, sin type checking)
-// STAGE III: debe rechazar por type mismatch
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: suma entre tipo string y tipo time_literal no es valida
 hardware {
     led alert_light on 13;
 }

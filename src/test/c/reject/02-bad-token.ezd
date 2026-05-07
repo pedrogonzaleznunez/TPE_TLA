@@ -1,5 +1,6 @@
 // Token invalido @ — error lexico puro
-// STAGE II: debe rechazar 
+// STAGE II: rechaza
+// Motivo: el caracter @ no es un token valido del lenguaje
 hardware {
     led alert_light on 13;
 }

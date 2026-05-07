@@ -1,3 +1,4 @@
+// Cubre: repeat N times con cuerpo de sentencias
 hardware {
     led blink_led on 13;
 }

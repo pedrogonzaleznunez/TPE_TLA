@@ -1,0 +1,9 @@
+// Cubre: wait statement con time literal
+hardware {
+    led alert_light on 13;
+}
+routine {
+    alert_light.turn_on();
+    wait 2s;
+    alert_light.turn_off();
+}

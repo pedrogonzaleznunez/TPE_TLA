@@ -1,3 +1,4 @@
+// Cubre: LED en pin digital, metodo simple
 hardware {
     led alert_light on 13;
 }

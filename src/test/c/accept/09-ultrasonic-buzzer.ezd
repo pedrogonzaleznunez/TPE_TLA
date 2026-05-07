@@ -1,3 +1,4 @@
+// Cubre: if con comparacion numerica, multiples componentes
 hardware {
     ultrasonic radar on (trig: 9, echo: 10);
     buzzer alarm on 8;
