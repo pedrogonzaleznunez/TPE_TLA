@@ -9,50 +9,17 @@
 ModuleDestructor initializeAbstractSyntaxTreeModule();
 
 /* Forward declarations */
-typedef struct HardwareBlock HardwareBlock;
-typedef struct HardwareDecl HardwareDecl;
-typedef struct RoutineBlock RoutineBlock;
-typedef struct Stmt Stmt;
-typedef struct StmtList StmtList;
 typedef struct Expr Expr;
 typedef struct ArgList ArgList;
+typedef struct Stmt Stmt;
+typedef struct StmtList StmtList;
+typedef struct PinSpecEntry PinSpecEntry;
+typedef struct PinSpec PinSpec;
+typedef struct HardwareDecl HardwareDecl;
+typedef struct HardwareDeclList HardwareDeclList;
+typedef struct HardwareBlock HardwareBlock;
+typedef struct RoutineBlock RoutineBlock;
 typedef struct Program Program;
-
-/* ------------------------------------------------------------------ */
-/* Pin                                                                  */
-/* ------------------------------------------------------------------ */
-
-typedef enum { PIN_DIGITAL, PIN_ANALOG } PinKind;
-
-typedef struct {
-	PinKind kind;
-	int number;
-} Pin;
-
-/* ------------------------------------------------------------------ */
-/* Hardware                                                             */
-/* ------------------------------------------------------------------ */
-
-typedef enum {
-	HW_LED, HW_BUZZER, HW_BUTTON, HW_POTENTIOMETER, HW_SERVO, HW_DHT11
-} HwDeviceType;
-
-typedef enum { HD_SIMPLE, HD_ULTRASONIC, HD_LCD } HwDeclKind;
-
-struct HardwareDecl {
-	HwDeclKind kind;
-	char * name;
-	union {
-		struct { HwDeviceType device; Pin pin; } simple;
-		struct { Pin trig; Pin echo; } ultrasonic;
-		/* HD_LCD: only name is used */
-	};
-	HardwareDecl * next;
-};
-
-struct HardwareBlock {
-	HardwareDecl * decls;
-};
 
 /* ------------------------------------------------------------------ */
 /* Expressions                                                          */
@@ -65,20 +32,22 @@ typedef enum {
 } Operator;
 
 typedef enum {
-	EXPR_INTEGER, EXPR_FLOAT, EXPR_STRING, EXPR_BOOL, EXPR_TIME, EXPR_ANALOG,
+	EXPR_INTEGER, EXPR_FLOAT, EXPR_STRING, EXPR_BOOL, EXPR_TIME,
 	EXPR_IDENTIFIER, EXPR_MEMBER, EXPR_CALL, EXPR_BINARY, EXPR_UNARY,
 } ExprType;
+
+struct ArgList {
+	Expr * expr;
+	ArgList * next;
+};
 
 struct Expr {
 	ExprType type;
 	union {
 		int integer;
 		double number;
-		char * string;
+		char * string;	/* EXPR_STRING, EXPR_IDENTIFIER, EXPR_TIME */
 		bool boolean;
-		int timeMs;
-		int analogPin;
-		char * identifier;
 		struct { char * object; char * member; } member;
 		struct { char * object; char * method; ArgList * args; } call;
 		struct { Operator op; Expr * left; Expr * right; } binary;
@@ -87,20 +56,12 @@ struct Expr {
 };
 
 /* ------------------------------------------------------------------ */
-/* Argument list                                                        */
-/* ------------------------------------------------------------------ */
-
-struct ArgList {
-	Expr * expr;
-	ArgList * next;
-};
-
-/* ------------------------------------------------------------------ */
 /* Statements                                                           */
 /* ------------------------------------------------------------------ */
 
 typedef enum {
-	STMT_CALL, STMT_VAR, STMT_IF, STMT_REPEAT_EVERY, STMT_WAIT, STMT_FOR_RANGE,
+	STMT_CALL, STMT_VAR, STMT_IF,
+	STMT_REPEAT_EVERY, STMT_REPEAT_TIMES, STMT_WAIT, STMT_FOR_RANGE,
 } StmtType;
 
 struct StmtList {
@@ -114,10 +75,58 @@ struct Stmt {
 		struct { char * object; char * method; ArgList * args; } call;
 		struct { char * name; Expr * value; } var;
 		struct { Expr * cond; StmtList * thenBranch; StmtList * elseBranch; } if_;
-		struct { StmtList * body; int intervalMs; } repeatEvery;
-		struct { int delayMs; } wait;
+		struct { StmtList * body; char * timeLiteral; } repeatEvery;
+		struct { int count; StmtList * body; } repeatTimes;
+		struct { char * timeLiteral; } wait;
 		struct { char * varName; Expr * from; Expr * to; StmtList * body; } forRange;
 	};
+};
+
+/* ------------------------------------------------------------------ */
+/* Hardware                  										  */
+/* ------------------------------------------------------------------ */
+
+typedef enum {
+	COMP_LED, COMP_BUZZER, COMP_BUTTON, COMP_POTENTIOMETER,
+	COMP_SERVO, COMP_ULTRASONIC, COMP_DHT11, COMP_LCD
+} ComponentType;
+
+typedef enum {
+	PIN_SPEC_SINGLE_INT,
+	PIN_SPEC_SINGLE_IDENTIFIER,
+	PIN_SPEC_NAMED_LIST,
+	PIN_SPEC_INT_LIST
+} PinSpecType;
+
+struct PinSpecEntry {
+	char * name;
+	int value;
+	PinSpecEntry * next;
+};
+
+struct PinSpec {
+	PinSpecType type;
+	union {
+		int singlePin;
+		char * singleIdentifier;
+		PinSpecEntry * namedPins;
+		PinSpecEntry * intPins;
+	};
+};
+
+struct HardwareDecl {
+	ComponentType componentType;
+	char * identifier;
+	PinSpec * pinSpec;
+};
+
+struct HardwareDeclList {
+	HardwareDecl * declaration;
+	HardwareDeclList * next;
+};
+
+struct HardwareBlock {
+	HardwareDeclList * declarations;
 };
 
 /* ------------------------------------------------------------------ */
@@ -137,12 +146,16 @@ struct Program {
 /* Destructors                                                          */
 /* ------------------------------------------------------------------ */
 
-void destroyHardwareDecl(HardwareDecl * decl);
-void destroyHardwareBlock(HardwareBlock * block);
 void destroyExpr(Expr * expr);
 void destroyArgList(ArgList * list);
 void destroyStmt(Stmt * stmt);
 void destroyStmtList(StmtList * list);
+void destroyPinSpecEntry(PinSpecEntry * entry);
+void destroyPinSpecEntries(PinSpecEntry * entries);
+void destroyPinSpec(PinSpec * pinSpec);
+void destroyHardwareDecl(HardwareDecl * decl);
+void destroyHardwareDeclList(HardwareDeclList * list);
+void destroyHardwareBlock(HardwareBlock * block);
 void destroyRoutineBlock(RoutineBlock * block);
 void destroyProgram(Program * program);
 
