@@ -1,4 +1,5 @@
 #include "AbstractSyntaxTree.h"
+#include <string.h>
 
 /* MODULE INTERNAL STATE */
 
@@ -17,26 +18,16 @@ ModuleDestructor initializeAbstractSyntaxTreeModule() {
 	return _shutdownAbstractSyntaxTreeModule;
 }
 
-/* PUBLIC FUNCTIONS */
-
-void destroyHardwareDecl(HardwareDecl * decl) {
-	if (decl == NULL) return;
-	free(decl->name);
-	destroyHardwareDecl(decl->next);
-	free(decl);
-}
-
-void destroyHardwareBlock(HardwareBlock * block) {
-	if (block == NULL) return;
-	destroyHardwareDecl(block->decls);
-	free(block);
-}
+/* PUBLIC FUNCTIONS — destroy only; allocation is done in BisonActions.c */
 
 void destroyExpr(Expr * expr) {
 	if (expr == NULL) return;
 	switch (expr->type) {
-		case EXPR_STRING:     free(expr->string); break;
-		case EXPR_IDENTIFIER: free(expr->identifier); break;
+		case EXPR_STRING:
+		case EXPR_IDENTIFIER:
+		case EXPR_TIME:
+			free(expr->string);
+			break;
 		case EXPR_MEMBER:
 			free(expr->member.object);
 			free(expr->member.member);
@@ -53,16 +44,19 @@ void destroyExpr(Expr * expr) {
 		case EXPR_UNARY:
 			destroyExpr(expr->unary.operand);
 			break;
-		default: break;
+		default:
+			break;
 	}
 	free(expr);
 }
 
 void destroyArgList(ArgList * list) {
-	if (list == NULL) return;
-	destroyExpr(list->expr);
-	destroyArgList(list->next);
-	free(list);
+	while (list != NULL) {
+		ArgList * current = list;
+		list = list->next;
+		destroyExpr(current->expr);
+		free(current);
+	}
 }
 
 void destroyStmt(Stmt * stmt) {
@@ -83,9 +77,14 @@ void destroyStmt(Stmt * stmt) {
 			destroyStmtList(stmt->if_.elseBranch);
 			break;
 		case STMT_REPEAT_EVERY:
+			free(stmt->repeatEvery.timeLiteral);
 			destroyStmtList(stmt->repeatEvery.body);
 			break;
+		case STMT_REPEAT_TIMES:
+			destroyStmtList(stmt->repeatTimes.body);
+			break;
 		case STMT_WAIT:
+			free(stmt->wait.timeLiteral);
 			break;
 		case STMT_FOR_RANGE:
 			free(stmt->forRange.varName);
@@ -98,10 +97,66 @@ void destroyStmt(Stmt * stmt) {
 }
 
 void destroyStmtList(StmtList * list) {
-	if (list == NULL) return;
-	destroyStmt(list->stmt);
-	destroyStmtList(list->next);
-	free(list);
+	while (list != NULL) {
+		StmtList * current = list;
+		list = list->next;
+		destroyStmt(current->stmt);
+		free(current);
+	}
+}
+
+void destroyPinSpecEntry(PinSpecEntry * entry) {
+	if (entry == NULL) return;
+	free(entry->name);
+	free(entry);
+}
+
+void destroyPinSpecEntries(PinSpecEntry * entries) {
+	while (entries != NULL) {
+		PinSpecEntry * current = entries;
+		entries = entries->next;
+		destroyPinSpecEntry(current);
+	}
+}
+
+void destroyPinSpec(PinSpec * pinSpec) {
+	if (pinSpec == NULL) return;
+	switch (pinSpec->type) {
+		case PIN_SPEC_SINGLE_IDENTIFIER:
+			free(pinSpec->singleIdentifier);
+			break;
+		case PIN_SPEC_NAMED_LIST:
+			destroyPinSpecEntries(pinSpec->namedPins);
+			break;
+		case PIN_SPEC_INT_LIST:
+			destroyPinSpecEntries(pinSpec->intPins);
+			break;
+		default:
+			break;
+	}
+	free(pinSpec);
+}
+
+void destroyHardwareDecl(HardwareDecl * decl) {
+	if (decl == NULL) return;
+	free(decl->identifier);
+	destroyPinSpec(decl->pinSpec);
+	free(decl);
+}
+
+void destroyHardwareDeclList(HardwareDeclList * list) {
+	while (list != NULL) {
+		HardwareDeclList * current = list;
+		list = list->next;
+		destroyHardwareDecl(current->declaration);
+		free(current);
+	}
+}
+
+void destroyHardwareBlock(HardwareBlock * block) {
+	if (block == NULL) return;
+	destroyHardwareDeclList(block->declarations);
+	free(block);
 }
 
 void destroyRoutineBlock(RoutineBlock * block) {
