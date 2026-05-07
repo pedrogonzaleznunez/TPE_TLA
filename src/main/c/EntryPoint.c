@@ -19,7 +19,6 @@ const int main(const int length, const char ** arguments) {
 	}
 	CompilerState compilerState = {
 		.abstractSyntaxtTree = NULL,
-		.value = 0
 	};
 	ModuleDestructor moduleDestructors[] = {
 		initializeAbstractSyntaxTreeModule(),
@@ -29,7 +28,12 @@ const int main(const int length, const char ** arguments) {
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	Program * program = compilerState.abstractSyntaxtTree;
-	
+	// ---------------------------------------------------------------
+	// Stage III — Semantic Analysis + Code Generation (pendiente)
+	// Acá va: executeSemanticAnalysis(&compilerState) para validar
+	//         componentes, pins y tipos; y executeCodeGenerator(&compilerState)
+	//         para emitir el sketch .ino de Arduino
+	// ---------------------------------------------------------------
 	logDebugging(logger, "Releasing AST resources...");
 	destroyProgram(program);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
