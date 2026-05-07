@@ -1,0 +1,10 @@
+// Operacion entre tipos incompatibles (string + time_literal)
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: suma entre tipo string y tipo time_literal no es valida
+hardware {
+    led alert_light on 13;
+}
+routine {
+    var result = "hola" + 200ms;
+}

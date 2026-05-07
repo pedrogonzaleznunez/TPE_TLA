@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Bash scripts must use Unix line endings (prevents /bin/bash^M in containers)
+*.sh text eol=lf

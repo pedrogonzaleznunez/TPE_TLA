@@ -1,0 +1,9 @@
+// Cubre: repeat N times con cuerpo de sentencias
+hardware {
+    led blink_led on 13;
+}
+routine {
+    repeat 5 times {
+        blink_led.toggle();
+    }
+}

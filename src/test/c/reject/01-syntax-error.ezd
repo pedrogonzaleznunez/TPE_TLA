@@ -1,0 +1,9 @@
+// Falta el identificador del componente — error sintactico puro
+// STAGE II: rechaza
+// Motivo: la declaracion de hardware requiere: tipo IDENTIFICADOR on pin;
+hardware {
+    led on 13;
+}
+routine {
+    alert_light.turn_on();
+}

@@ -19,16 +19,15 @@ const int main(const int length, const char ** arguments) {
 	}
 	CompilerState compilerState = {
 		.abstractSyntaxtTree = NULL,
-		.value = 0
 	};
 	ModuleDestructor moduleDestructors[] = {
 		initializeAbstractSyntaxTreeModule(),
 		initializeFlexActionsModule(lexicalAnalyzer),
 		initializeBisonActionsModule(&compilerState),
-		initializeFrontendModule(lexicalAnalyzer)
+		initializeFrontendModule(lexicalAnalyzer),
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
-	EzProgram * program = (EzProgram *) compilerState.abstractSyntaxtTree;
+	Program * program = compilerState.abstractSyntaxtTree;
 	if (compilationStatus == SUCCEEDED) {
 		logDebugging(logger, "Frontend completed successfully.");
 	}
@@ -36,8 +35,12 @@ const int main(const int length, const char ** arguments) {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");
 		compilationStatus = FAILED;
 	}
+	// ---------------------------------------------------------------
+	// Stage III — Análisis semántico + Generación de código (pendiente)
+	// Aquí: executeSemanticAnalysis(&compilerState) y executeCodeGenerator(&compilerState)
+	// ---------------------------------------------------------------
 	logDebugging(logger, "Releasing AST resources...");
-	destroyEzProgram(program);
+	destroyProgram(program);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();
 	}

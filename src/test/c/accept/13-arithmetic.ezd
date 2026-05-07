@@ -1,0 +1,10 @@
+
+// Cubre: operadores aritmeticos y var con expresion
+hardware {
+    servo barrier on 9;
+}
+routine {
+    var angle = 90 + 45;
+    var speed = angle / 2;
+    barrier.move(speed);
+}

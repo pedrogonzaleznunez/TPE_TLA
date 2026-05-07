@@ -1,0 +1,8 @@
+// Cubre: LCD con int list pin spec, print con coordenadas
+hardware {
+    lcd screen on (12, 11, 5, 4, 3, 2);
+}
+routine {
+    screen.clear();
+    screen.print(0, 0, "System Ready");
+}

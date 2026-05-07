@@ -1,0 +1,10 @@
+// Componente usado en routine sin declarar en hardware
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: 'radar' no esta declarado en el bloque hardware
+hardware {
+    led alert_light on 13;
+}
+routine {
+    radar.read_distance();
+}

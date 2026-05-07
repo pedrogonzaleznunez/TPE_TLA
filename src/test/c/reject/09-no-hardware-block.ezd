@@ -1,0 +1,4 @@
+// Programa sin bloque hardware — error sintactico puro
+// STAGE II: rechaza 
+// Motivo: el programa debe comenzar con el bloque hardware
+routine {}

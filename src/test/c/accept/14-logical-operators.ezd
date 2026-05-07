@@ -1,0 +1,11 @@
+// Cubre: operadores logicos and, or, not
+hardware {
+    button start on 2;
+    button stop on 3;
+    buzzer alarm on 8;
+}
+routine {
+    if start.is_pressed() and not stop.is_pressed() {
+        alarm.turn_on();
+    }
+}

@@ -1,0 +1,9 @@
+// Cubre: repeat every con time literal en milisegundos
+hardware {
+    led blink_led on 13;
+}
+routine {
+    repeat every 500ms {
+        blink_led.toggle();
+    }
+}

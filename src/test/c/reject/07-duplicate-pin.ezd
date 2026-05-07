@@ -1,0 +1,12 @@
+// Dos componentes asignados al mismo pin
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: el pin 9 esta asignado a dos componentes distintos
+hardware {
+    led alert_light on 9;
+    servo barrier on 9;
+}
+routine {
+    alert_light.turn_on();
+    
+}

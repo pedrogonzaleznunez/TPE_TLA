@@ -1,0 +1,6 @@
+// Falta el bloque hardware — error sintactico puro
+// STAGE II: rechaza 
+// Motivo: el programa debe comenzar con el bloque hardware
+routine {
+    alert_light.turn_on();
+}

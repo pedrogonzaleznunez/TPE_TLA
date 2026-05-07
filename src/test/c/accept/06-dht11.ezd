@@ -1,0 +1,8 @@
+// Cubre: sensor DHT11, multiples metodos sobre un componente
+hardware {
+    dht11 climate_sensor on 4;
+}
+routine {
+    var temp = climate_sensor.temperature();
+    var hum = climate_sensor.humidity();
+}

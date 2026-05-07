@@ -5,7 +5,7 @@
 #include "../../support/type/TokenLabel.h"
 #include "../syntactic-analysis/AbstractSyntaxTree.h"
 #include "../syntactic-analysis/BisonParser.h"
-#include <stdbool.h>
+
 }
 
 %{
@@ -14,21 +14,16 @@
  * @see https://westes.github.io/flex/manual/Definitions-Section.html#Definitions-Section
  */
 
-extern CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label);
-extern CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context);
 extern CompilationStatus EOFLexemeAction();
-extern CompilationStatus IgnoredLexemeAction();
-extern CompilationStatus IntegerLexemeAction();
 extern CompilationStatus FloatLexemeAction();
 extern CompilationStatus IdentifierLexemeAction();
+extern CompilationStatus IgnoredLexemeAction();
+extern CompilationStatus IntegerLexemeAction();
+extern CompilationStatus KeywordLexemeAction(TokenLabel label);
+extern CompilationStatus OperatorLexemeAction(TokenLabel label);
 extern CompilationStatus StringLexemeAction();
-extern CompilationStatus BooleanLexemeAction(const bool value);
-extern CompilationStatus TimeLexemeAction();
-extern CompilationStatus LeaveImportExpressionLexemeAction();
-extern CompilationStatus LeaveMultilineCommentLexemeAction();
-extern CompilationStatus ParenthesisLexemeAction(TokenLabel label);
-extern CompilationStatus SubexpressionLexemeAction();
-extern CompilationStatus SimpleTokenLexemeAction(TokenLabel label);
+extern CompilationStatus SymbolLexemeAction(TokenLabel label);
+extern CompilationStatus TimeLiteralLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
 
 %}
@@ -38,7 +33,6 @@ extern CompilationStatus UnknownLexemeAction();
  *
  * @see https://westes.github.io/flex/manual/Start-Conditions.html
  */
-%x IMPORT_EXPRESSION
 %x MULTILINE_COMMENT
 
 /**
@@ -48,12 +42,7 @@ extern CompilationStatus UnknownLexemeAction();
  * @see https://westes.github.io/flex/manual/Patterns.html
  */
 whitespace			[[:space:]]+
-digit				[0-9]
-identifier			[a-zA-Z_][a-zA-Z0-9_]*
-integer				{digit}+
-float				{digit}+\.{digit}+
-time				{digit}+(ms|s)
-string				\"([^\\\"]|\\.)*\"
+comment				"//"[^\n]*
 
 %%
 
@@ -65,75 +54,76 @@ string				\"([^\\\"]|\\.)*\"
 
 %}
 
-"/*"							{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
-<MULTILINE_COMMENT>"*/"			{ return LeaveMultilineCommentLexemeAction(); }
-<MULTILINE_COMMENT>[^*]+		{ return IgnoredLexemeAction(); }
-<MULTILINE_COMMENT>.			{ return IgnoredLexemeAction(); }
+{comment}							{ return IgnoredLexemeAction(); }
+"/*"								{ BEGIN(MULTILINE_COMMENT); return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>"*/"				{ BEGIN(INITIAL); return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>\n				{ return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>.				{ return IgnoredLexemeAction(); }
 
-"hardware"						{ return SimpleTokenLexemeAction(HARDWARE); }
-"routine"						{ return SimpleTokenLexemeAction(ROUTINE); }
-"var"							{ return SimpleTokenLexemeAction(VAR); }
-"if"							{ return SimpleTokenLexemeAction(IF); }
-"else"					    	{ return SimpleTokenLexemeAction(ELSE); }
-"repeat"						{ return SimpleTokenLexemeAction(REPEAT); }
-"every"						    { return SimpleTokenLexemeAction(EVERY); }
-"wait"						    { return SimpleTokenLexemeAction(WAIT); }
-"times"						    { return SimpleTokenLexemeAction(TIMES); }
-"for"						    { return SimpleTokenLexemeAction(FOR); }
-"from"					    	{ return SimpleTokenLexemeAction(FROM); }
-"to"							{ return SimpleTokenLexemeAction(TO); }
-"on"							{ return SimpleTokenLexemeAction(ON); }
-"trig"					    	{ return SimpleTokenLexemeAction(TRIG); }
-"echo"					       	{ return SimpleTokenLexemeAction(ECHO_KW); }
+"hardware"							{ return KeywordLexemeAction(HARDWARE); }
+"routine"							{ return KeywordLexemeAction(ROUTINE); }
+"var"								{ return KeywordLexemeAction(VAR); }
+"if"								{ return KeywordLexemeAction(IF); }
+"else"								{ return KeywordLexemeAction(ELSE); }
+"for"								{ return KeywordLexemeAction(FOR); }
+"from"								{ return KeywordLexemeAction(FROM); }
+"to"								{ return KeywordLexemeAction(TO); }
+"repeat"							{ return KeywordLexemeAction(REPEAT); }
+"every"								{ return KeywordLexemeAction(EVERY); }
+"wait"								{ return KeywordLexemeAction(WAIT); }
+"times"								{ return KeywordLexemeAction(TIMES); }
+"on"								{ return KeywordLexemeAction(ON); }
+"and"								{ return KeywordLexemeAction(AND); }
+"or"								{ return KeywordLexemeAction(OR); }
+"not"								{ return KeywordLexemeAction(NOT); }
+"true"								{ return KeywordLexemeAction(TRUE); }
+"false"								{ return KeywordLexemeAction(FALSE); }
+"break"								{ return KeywordLexemeAction(BREAK); }
+"continue"							{ return KeywordLexemeAction(CONTINUE); }
 
-"led"							{ return SimpleTokenLexemeAction(LED); }
-"buzzer"						{ return SimpleTokenLexemeAction(BUZZER); }
-"button"						{ return SimpleTokenLexemeAction(BUTTON); }
-"potentiometer"			    	{ return SimpleTokenLexemeAction(POTENTIOMETER); }
-"servo"					    	{ return SimpleTokenLexemeAction(SERVO); }
-"ultrasonic"					{ return SimpleTokenLexemeAction(ULTRASONIC); }
-"dht11"					    	{ return SimpleTokenLexemeAction(DHT11); }
-"lcd"							{ return SimpleTokenLexemeAction(LCD); }
+"led"								{ return KeywordLexemeAction(LED); }
+"buzzer"							{ return KeywordLexemeAction(BUZZER); }
+"button"							{ return KeywordLexemeAction(BUTTON); }
+"potentiometer"						{ return KeywordLexemeAction(POTENTIOMETER); }
+"servo"								{ return KeywordLexemeAction(SERVO); }
+"ultrasonic"						{ return KeywordLexemeAction(ULTRASONIC); }
+"dht11"								{ return KeywordLexemeAction(DHT11); }
+"lcd"								{ return KeywordLexemeAction(LCD); }
 
-"and"							{ return SimpleTokenLexemeAction(AND); }
-"or"							{ return SimpleTokenLexemeAction(OR); }
-"not"					    	{ return SimpleTokenLexemeAction(NOT); }
+"=="								{ return OperatorLexemeAction(EQ); }
+"!="								{ return OperatorLexemeAction(NEQ); }
+"<="								{ return OperatorLexemeAction(LTE); }
+">="								{ return OperatorLexemeAction(GTE); }
+"<"									{ return OperatorLexemeAction(LT); }
+">"									{ return OperatorLexemeAction(GT); }
+"="									{ return OperatorLexemeAction(ASSIGN); }
+"+"									{ return OperatorLexemeAction(PLUS); }
+"-"									{ return OperatorLexemeAction(MINUS); }
+"*"									{ return OperatorLexemeAction(STAR); }
+"/"									{ return OperatorLexemeAction(SLASH); }
+"%"									{ return OperatorLexemeAction(PERCENT); }
 
-"true"					    	{ return BooleanLexemeAction(true); }
-"false"						    { return BooleanLexemeAction(false); }
+"{"									{ return SymbolLexemeAction(OPEN_BRACE); }
+"}"									{ return SymbolLexemeAction(CLOSE_BRACE); }
+"("									{ return SymbolLexemeAction(OPEN_PARENTHESIS); }
+")"									{ return SymbolLexemeAction(CLOSE_PARENTHESIS); }
+";"									{ return SymbolLexemeAction(SEMICOLON); }
+"."									{ return SymbolLexemeAction(DOT); }
+","									{ return SymbolLexemeAction(COMMA); }
+":"									{ return SymbolLexemeAction(COLON); }
+"["									{ return SymbolLexemeAction(OPEN_BRACKET); }
+"]"									{ return SymbolLexemeAction(CLOSE_BRACKET); }
 
-"=="						    { return SimpleTokenLexemeAction(EQ); }
-"!="					    	{ return SimpleTokenLexemeAction(NEQ); }
-"<="						    { return SimpleTokenLexemeAction(LE); }
-">="						    { return SimpleTokenLexemeAction(GE); }
-"<"							    { return SimpleTokenLexemeAction(LT); }
-">"							    { return SimpleTokenLexemeAction(GT); }
-"="							    { return SimpleTokenLexemeAction(ASSIGN); }
+[0-9]+(ms|us|s)						{ return TimeLiteralLexemeAction(); }
+[0-9]+"."[0-9]+						{ return FloatLexemeAction(); }
+[0-9]+								{ return IntegerLexemeAction(); }
+\"[^\"]*\"							{ return StringLexemeAction(); }
+[a-zA-Z_][a-zA-Z0-9_]*				{ return IdentifierLexemeAction(); }
 
-"+"							    { return ArithmeticOperatorLexemeAction(ADD); }
-"-"							    { return ArithmeticOperatorLexemeAction(SUB); }
-"*"							    { return ArithmeticOperatorLexemeAction(MUL); }
-"/"							    { return ArithmeticOperatorLexemeAction(DIV); }
+{whitespace}						{ return IgnoredLexemeAction(); }
+.									{ return UnknownLexemeAction(); }
 
-"("							    { return ParenthesisLexemeAction(OPEN_PARENTHESIS); }
-")"							    { return ParenthesisLexemeAction(CLOSE_PARENTHESIS); }
-"{" 						    { return SimpleTokenLexemeAction(OPEN_BRACE); }
-"}"							    { return SimpleTokenLexemeAction(CLOSE_BRACE); }
-";"							    { return SimpleTokenLexemeAction(SEMICOLON); }
-","							    { return SimpleTokenLexemeAction(COMMA); }
-"."							    { return SimpleTokenLexemeAction(DOT); }
-":"							    { return SimpleTokenLexemeAction(COLON); }
-
-{time}						    { return TimeLexemeAction(); }
-{float}						    { return FloatLexemeAction(); }
-{integer}					    { return IntegerLexemeAction(); }
-{string}					    { return StringLexemeAction(); }
-{identifier}				    { return IdentifierLexemeAction(); }
-
-{whitespace}				    { return IgnoredLexemeAction(); }
-.							    { return UnknownLexemeAction(); }
-
-<<EOF>>				        	{ return EOFLexemeAction(); }
+<<EOF>>								{ return EOFLexemeAction(); }
 
 %%
 

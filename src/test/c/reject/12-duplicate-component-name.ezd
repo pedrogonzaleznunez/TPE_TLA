@@ -1,0 +1,11 @@
+// Dos componentes con el mismo identificador
+// STAGE II: acepta (validacion semantica pendiente)
+// STAGE III: debe rechazar
+// Motivo: dos componentes con el mismo identificador 'x'
+hardware {
+    led x on 1;
+    led x on 2;
+}
+routine {
+    x.turn_on();
+}

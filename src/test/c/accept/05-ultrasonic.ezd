@@ -1,0 +1,7 @@
+// Cubre: sensor ultrasonico, named pin spec (trig/echo)
+hardware {
+    ultrasonic radar on (trig: 9, echo: 10);
+}
+routine {
+    var current_distance = radar.read_distance();
+}

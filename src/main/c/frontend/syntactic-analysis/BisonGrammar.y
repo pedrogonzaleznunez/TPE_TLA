@@ -3,18 +3,14 @@
 #include "../../support/type/TokenLabel.h"
 #include "AbstractSyntaxTree.h"
 #include "BisonActions.h"
+
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
- * The error reporting function for Bison parser.
- *
- * @todo Add location to the grammar and "pushToken" API function.
- *
  * @see https://www.gnu.org/software/bison/manual/html_node/Error-Reporting-Function.html
- * @see https://www.gnu.org/software/bison/manual/html_node/Tracking-Locations.html
  */
 void yyerror(const YYLTYPE * location, const char * message) {
 	if (location != NULL) {
@@ -27,6 +23,14 @@ void yyerror(const YYLTYPE * location, const char * message) {
 
 %}
 
+/**
+ * %code requires is emitted into both BisonParser.c and BisonParser.h,
+ * so that AST types are visible wherever BisonParser.h is included.
+ */
+%code requires {
+	#include "AbstractSyntaxTree.h"
+}
+
 // You touch this, and you die.
 %define api.pure full
 %define api.push-pull push
@@ -36,231 +40,238 @@ void yyerror(const YYLTYPE * location, const char * message) {
 
 %union {
 	/** Terminals. */
-
-	int integer;
-	double floatValue;
-	bool boolean;
+	signed int integer;
+	double decimal;
 	char * string;
-	EzTimeValue timeValue;
+	TokenLabel token;
 
 	/** Non-terminals. */
-
-	EzProgram * program;
-	EzHardwareBlock * hardwareBlock;
-	EzHardwareDecl * hardwareDecl;
-	EzHardwareDeclList * hardwareDeclList;
-	EzRoutineBlock * routineBlock;
-	EzStatement * statement;
-	EzStatementList * statementList;
-	EzBlock * block;
-	EzExpression * expression;
-	EzLiteral * literal;
-	EzArgumentList * argumentList;
+	Program * program;
+	HardwareBlock * hardwareBlock;
+	HardwareDeclList * hardwareDeclList;
+	HardwareDecl * hardwareDecl;
+	ComponentType componentType;
+	PinSpec * pinSpec;
+	PinSpecEntry * pinSpecEntry;
+	RoutineBlock * routineBlock;
+	StmtList * stmtList;
+	Stmt * stmt;
+	Expr * expr;
+	ArgList * argList;
 }
 
 /**
- * Destructors. This functions are executed after the parsing ends, so if the
- * AST must be used in the following phases of the compiler you shouldn't used
- * this approach for the AST root node ("program" non-terminal, in this
- * grammar), or it will drop the entire tree even if the parsing succeeds.
- *
+ * Destructors run on grammar error or on symbols popped during error recovery.
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
+%destructor { destroyHardwareBlock($$); } <hardwareBlock>
+%destructor { destroyHardwareDecl($$); } <hardwareDecl>
+%destructor { destroyHardwareDeclList($$); } <hardwareDeclList>
+%destructor { destroyPinSpec($$); } <pinSpec>
+%destructor { destroyPinSpecEntries($$); } <pinSpecEntry>
+%destructor { destroyRoutineBlock($$); } <routineBlock>
+%destructor { destroyStmt($$); } <stmt>
+%destructor { destroyStmtList($$); } <stmtList>
+%destructor { destroyExpr($$); } <expr>
+%destructor { destroyArgList($$); } <argList>
 %destructor { free($$); } <string>
-%destructor { destroyEzHardwareBlock($$); } <hardwareBlock>
-%destructor { destroyEzHardwareDecl($$); } <hardwareDecl>
-%destructor { destroyEzHardwareDeclList($$); } <hardwareDeclList>
-%destructor { destroyEzRoutineBlock($$); } <routineBlock>
-%destructor { destroyEzStatement($$); } <statement>
-%destructor { destroyEzStatementList($$); } <statementList>
-%destructor { destroyEzBlock($$); } <block>
-%destructor { destroyEzExpression($$); } <expression>
-%destructor { destroyEzLiteral($$); } <literal>
-%destructor { destroyEzArgumentList($$); } <argumentList>
 
 /** Terminals. */
 %token <integer> INTEGER
-%token <floatValue> FLOAT
-%token <boolean> BOOLEAN
-%token <string> STRING
-%token <string> IDENTIFIER
-%token <timeValue> TIME
+%token <decimal> FLOAT
+%token <string>  STRING
+%token <string>  TIME_LITERAL
+%token <string>  IDENTIFIER
 
-%token HARDWARE ROUTINE VAR IF ELSE REPEAT EVERY WAIT TIMES FOR FROM TO ON
-%token TRIG ECHO_KW
-%token LED BUZZER BUTTON POTENTIOMETER SERVO ULTRASONIC DHT11 LCD
+%token <token> HARDWARE ROUTINE VAR IF ELSE FOR FROM TO REPEAT EVERY WAIT TIMES ON
+%token <token> AND OR NOT TRUE FALSE BREAK CONTINUE
+%token <token> LED BUZZER BUTTON POTENTIOMETER SERVO ULTRASONIC DHT11 LCD
 
-%token ADD SUB MUL DIV
-%token LT GT LE GE EQ NEQ
-%token AND OR NOT
-%token ASSIGN
+%token <token> EQ NEQ LTE GTE LT GT ASSIGN
+%token <token> PLUS MINUS STAR SLASH PERCENT
 
-%token OPEN_BRACE CLOSE_BRACE OPEN_PARENTHESIS CLOSE_PARENTHESIS
-%token SEMICOLON COMMA DOT COLON
+%token <token> OPEN_BRACE CLOSE_BRACE OPEN_PARENTHESIS CLOSE_PARENTHESIS
+%token <token> SEMICOLON DOT COMMA COLON OPEN_BRACKET CLOSE_BRACKET
+
+%token <token> IGNORED UNKNOWN
 
 /** Non-terminals. */
 %type <program> program
 %type <hardwareBlock> hardware_block
+%type <hardwareDeclList> hardware_decl_list
 %type <hardwareDecl> hardware_decl
-%type <hardwareDeclList> hardware_decl_list hardware_decl_list_opt
+%type <componentType> component_type
+%type <pinSpec> pin_spec
+%type <pinSpecEntry> named_pin_list named_pin int_list int_pin
 %type <routineBlock> routine_block
-%type <statement> statement
-%type <statementList> statement_list statement_list_opt
-%type <block> block
-%type <expression> expression logical_or logical_and equality relational additive multiplicative unary primary
-%type <string> method_name
-%type <literal> literal
-%type <argumentList> argument_list argument_list_opt
+%type <stmtList> stmts
+%type <stmt> stmt
+%type <expr> expr
+%type <argList> args arg_list
+%type <string> time_literal method_name
 
 /**
- * Precedence and associativity.
- *
- * @see https://en.cppreference.com/w/cpp/language/operator_precedence.html
+ * Operator precedence, lowest to highest.
  * @see https://www.gnu.org/software/bison/manual/html_node/Precedence.html
  */
 %left OR
 %left AND
-%right NOT
-%nonassoc EQ NEQ LT LE GT GE
-%left ADD SUB
-%left MUL DIV
-%right UMINUS
+%left EQ NEQ
+%left LT GT LTE GTE
+%left PLUS MINUS
+%left STAR SLASH
+%right NOT UNARY_MINUS
 
 %%
 
-program: hardware_block routine_block					{ $$ = EzProgramSemanticAction($1, $2); }
+// IMPORTANT: To use λ in the following grammar, use the %empty symbol.
+
+program
+	: hardware_block routine_block					{ $$ = ProgramSemanticAction($1, $2); }
 	;
 
-hardware_block: HARDWARE OPEN_BRACE hardware_decl_list_opt CLOSE_BRACE
-														{ $$ = EzHardwareBlockSemanticAction($3); }
+/* ------------------------------------------------------------------ */
+/* Hardware block                                                       */
+/* ------------------------------------------------------------------ */
+
+hardware_block
+	: HARDWARE OPEN_BRACE hardware_decl_list CLOSE_BRACE	{ $$ = HardwareBlockSemanticAction($3); }
 	;
 
-hardware_decl_list_opt: %empty							{ $$ = NULL; }
-	| hardware_decl_list								{ $$ = $1; }
+hardware_decl_list
+	: hardware_decl								{ $$ = NewHardwareDeclListSemanticAction($1); }
+	| hardware_decl_list hardware_decl				{ $$ = AppendHardwareDeclListSemanticAction($1, $2); }
 	;
 
-hardware_decl_list: hardware_decl_list hardware_decl	{ $$ = EzHardwareDeclListSemanticAction($1, $2); }
-	| hardware_decl										{ $$ = EzHardwareDeclListSemanticAction(NULL, $1); }
+hardware_decl
+	: component_type IDENTIFIER ON pin_spec SEMICOLON		{ $$ = HardwareDeclSemanticAction($1, $2, $4); }
 	;
 
-hardware_decl: LED IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_LED, $2, $4); }
-	| BUZZER IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_BUZZER, $2, $4); }
-	| BUTTON IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_BUTTON, $2, $4); }
-	| POTENTIOMETER IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_POTENTIOMETER, $2, $4); }
-	| SERVO IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_SERVO, $2, $4); }
-	| DHT11 IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_DHT11, $2, $4); }
-	| LCD IDENTIFIER ON INTEGER SEMICOLON
-														{ $$ = EzHardwareSimpleDeclSemanticAction(EZ_HW_LCD, $2, $4); }
-	| ULTRASONIC IDENTIFIER ON OPEN_PARENTHESIS TRIG COLON INTEGER COMMA ECHO_KW COLON INTEGER CLOSE_PARENTHESIS SEMICOLON
-														{ $$ = EzHardwareUltrasonicDeclSemanticAction($2, $7, $11); }
+component_type
+	: LED										{ $$ = ComponentTypeSemanticAction($1); }
+	| BUZZER									{ $$ = ComponentTypeSemanticAction($1); }
+	| BUTTON									{ $$ = ComponentTypeSemanticAction($1); }
+	| POTENTIOMETER								{ $$ = ComponentTypeSemanticAction($1); }
+	| SERVO										{ $$ = ComponentTypeSemanticAction($1); }
+	| ULTRASONIC								{ $$ = ComponentTypeSemanticAction($1); }
+	| DHT11										{ $$ = ComponentTypeSemanticAction($1); }
+	| LCD										{ $$ = ComponentTypeSemanticAction($1); }
 	;
 
-routine_block: ROUTINE OPEN_BRACE statement_list_opt CLOSE_BRACE
-														{ $$ = EzRoutineBlockSemanticAction($3); }
+pin_spec
+	: INTEGER									{ $$ = IntegerPinSpecSemanticAction($1); }
+	| IDENTIFIER								{ $$ = IdentifierPinSpecSemanticAction($1); }
+	| OPEN_PARENTHESIS named_pin_list CLOSE_PARENTHESIS	{ $$ = NamedListPinSpecSemanticAction($2); }
+	| OPEN_PARENTHESIS int_list CLOSE_PARENTHESIS		{ $$ = IntListPinSpecSemanticAction($2); }
 	;
 
-statement_list_opt: %empty								{ $$ = NULL; }
-	| statement_list									{ $$ = $1; }
+named_pin_list
+	: named_pin									{ $$ = NewPinSpecEntryListSemanticAction($1); }
+	| named_pin_list COMMA named_pin				{ $$ = AppendPinSpecEntryListSemanticAction($1, $3); }
 	;
 
-statement_list: statement_list statement				{ $$ = EzStatementListSemanticAction($1, $2); }
-	| statement											{ $$ = EzStatementListSemanticAction(NULL, $1); }
+named_pin
+	: IDENTIFIER COLON INTEGER					{ $$ = NamedPinEntrySemanticAction($1, $3); }
 	;
 
-statement: VAR IDENTIFIER ASSIGN expression SEMICOLON
-														{ $$ = EzVarDeclSemanticAction($2, $4); }
-	| IDENTIFIER ASSIGN expression SEMICOLON
-														{ $$ = EzAssignmentSemanticAction($1, $3); }
-	| IF OPEN_PARENTHESIS expression CLOSE_PARENTHESIS block
-														{ $$ = EzIfSemanticAction($3, $5, NULL); }
-	| IF OPEN_PARENTHESIS expression CLOSE_PARENTHESIS block ELSE block
-														{ $$ = EzIfSemanticAction($3, $5, $7); }
-	| REPEAT EVERY TIME block
-														{ $$ = EzRepeatEverySemanticAction($3, $4); }
-	| REPEAT expression TIMES block
-														{ $$ = EzRepeatTimesSemanticAction($2, $4); }
-	| WAIT TIME SEMICOLON
-														{ $$ = EzWaitSemanticAction($2); }
-	| FOR IDENTIFIER FROM expression TO expression block
-														{ $$ = EzForRangeSemanticAction($2, $4, $6, $7); }
-	| IDENTIFIER DOT method_name OPEN_PARENTHESIS argument_list_opt CLOSE_PARENTHESIS SEMICOLON
-														{ $$ = EzMethodCallSemanticAction($1, $3, $5); }
-	| block
-														{ $$ = EzBlockStatementSemanticAction($1); }
+int_list
+	: int_pin									{ $$ = NewPinSpecEntryListSemanticAction($1); }
+	| int_list COMMA int_pin						{ $$ = AppendPinSpecEntryListSemanticAction($1, $3); }
 	;
 
-block: OPEN_BRACE statement_list_opt CLOSE_BRACE
-														{ $$ = EzBlockSemanticAction($2); }
+int_pin
+	: INTEGER									{ $$ = IntPinEntrySemanticAction($1); }
 	;
 
-argument_list_opt: %empty								{ $$ = NULL; }
-	| argument_list										{ $$ = $1; }
+/* ------------------------------------------------------------------ */
+/* Routine block                                                        */
+/* ------------------------------------------------------------------ */
+
+routine_block
+	: ROUTINE OPEN_BRACE stmts CLOSE_BRACE				{ $$ = RoutineBlockSemanticAction($3); }
 	;
 
-argument_list: argument_list COMMA expression			{ $$ = EzArgumentListSemanticAction($1, $3); }
-	| expression										{ $$ = EzArgumentListSemanticAction(NULL, $1); }
+stmts
+	: stmts stmt								{ $$ = AppendStmtSemanticAction($1, $2); }
+	| %empty									{ $$ = NULL; }
 	;
 
-expression: logical_or									{ $$ = $1; }
+stmt
+	: IDENTIFIER DOT method_name OPEN_PARENTHESIS args CLOSE_PARENTHESIS SEMICOLON
+												{ $$ = CallStmtSemanticAction($1, $3, $5); }
+	| VAR IDENTIFIER ASSIGN expr SEMICOLON				{ $$ = VarStmtSemanticAction($2, $4); }
+	| IF expr OPEN_BRACE stmts CLOSE_BRACE				{ $$ = IfStmtSemanticAction($2, $4, NULL); }
+	| IF expr OPEN_BRACE stmts CLOSE_BRACE ELSE OPEN_BRACE stmts CLOSE_BRACE
+												{ $$ = IfStmtSemanticAction($2, $4, $8); }
+	| REPEAT EVERY time_literal OPEN_BRACE stmts CLOSE_BRACE
+												{ $$ = RepeatEveryStmtSemanticAction($3, $5); }
+	| REPEAT INTEGER TIMES OPEN_BRACE stmts CLOSE_BRACE	{ $$ = RepeatTimesStmtSemanticAction($2, $5); }
+	| WAIT time_literal SEMICOLON					{ $$ = WaitStmtSemanticAction($2); }
+	| FOR IDENTIFIER FROM expr TO expr OPEN_BRACE stmts CLOSE_BRACE
+												{ $$ = ForRangeStmtSemanticAction($2, $4, $6, $8); }
 	;
 
-logical_or: logical_or OR logical_and					{ $$ = EzBinaryExprSemanticAction(EZ_BIN_OR, $1, $3); }
-	| logical_and										{ $$ = $1; }
+/* ------------------------------------------------------------------ */
+/* Arguments                                                            */
+/* ------------------------------------------------------------------ */
+
+args
+	: arg_list									{ $$ = $1; }
+	| %empty									{ $$ = NULL; }
 	;
 
-logical_and: logical_and AND equality					{ $$ = EzBinaryExprSemanticAction(EZ_BIN_AND, $1, $3); }
-	| equality											{ $$ = $1; }
+arg_list
+	: expr										{ $$ = SingleArgSemanticAction($1); }
+	| arg_list COMMA expr						{ $$ = AppendArgSemanticAction($1, $3); }
 	;
 
-equality: equality EQ relational						{ $$ = EzBinaryExprSemanticAction(EZ_BIN_EQ, $1, $3); }
-	| equality NEQ relational							{ $$ = EzBinaryExprSemanticAction(EZ_BIN_NEQ, $1, $3); }
-	| relational										{ $$ = $1; }
+/* ------------------------------------------------------------------ */
+/* Expressions                                                          */
+/* ------------------------------------------------------------------ */
+
+expr
+	: expr PLUS expr							{ $$ = BinaryExprSemanticAction($1, OP_ADD, $3); }
+	| expr MINUS expr							{ $$ = BinaryExprSemanticAction($1, OP_SUB, $3); }
+	| expr STAR expr							{ $$ = BinaryExprSemanticAction($1, OP_MUL, $3); }
+	| expr SLASH expr							{ $$ = BinaryExprSemanticAction($1, OP_DIV, $3); }
+	| expr EQ expr								{ $$ = BinaryExprSemanticAction($1, OP_EQ, $3); }
+	| expr NEQ expr								{ $$ = BinaryExprSemanticAction($1, OP_NE, $3); }
+	| expr LT expr								{ $$ = BinaryExprSemanticAction($1, OP_LT, $3); }
+	| expr GT expr								{ $$ = BinaryExprSemanticAction($1, OP_GT, $3); }
+	| expr LTE expr								{ $$ = BinaryExprSemanticAction($1, OP_LE, $3); }
+	| expr GTE expr								{ $$ = BinaryExprSemanticAction($1, OP_GE, $3); }
+	| expr AND expr								{ $$ = BinaryExprSemanticAction($1, OP_AND, $3); }
+	| expr OR expr								{ $$ = BinaryExprSemanticAction($1, OP_OR, $3); }
+	| NOT expr									{ $$ = UnaryExprSemanticAction(OP_NOT, $2); }
+	| MINUS expr %prec UNARY_MINUS				{ $$ = UnaryExprSemanticAction(OP_NEG, $2); }
+	| OPEN_PARENTHESIS expr CLOSE_PARENTHESIS	{ $$ = $2; }
+	| IDENTIFIER DOT method_name OPEN_PARENTHESIS args CLOSE_PARENTHESIS
+												{ $$ = CallExprSemanticAction($1, $3, $5); }
+	| IDENTIFIER DOT method_name				{ $$ = MemberExprSemanticAction($1, $3); }
+	| IDENTIFIER								{ $$ = IdentifierExprSemanticAction($1); }
+	| INTEGER									{ $$ = IntegerExprSemanticAction($1); }
+	| FLOAT										{ $$ = FloatExprSemanticAction($1); }
+	| STRING									{ $$ = StringExprSemanticAction($1); }
+	| TRUE										{ $$ = BoolExprSemanticAction(true); }
+	| FALSE										{ $$ = BoolExprSemanticAction(false); }
+	| TIME_LITERAL								{ $$ = TimeExprSemanticAction($1); }
 	;
 
-relational: relational LT additive						{ $$ = EzBinaryExprSemanticAction(EZ_BIN_LT, $1, $3); }
-	| relational GT additive							{ $$ = EzBinaryExprSemanticAction(EZ_BIN_GT, $1, $3); }
-	| relational LE additive							{ $$ = EzBinaryExprSemanticAction(EZ_BIN_LE, $1, $3); }
-	| relational GE additive							{ $$ = EzBinaryExprSemanticAction(EZ_BIN_GE, $1, $3); }
-	| additive											{ $$ = $1; }
+/* ------------------------------------------------------------------ */
+/* Method name: IDENTIFIER or keywords used as method names            */
+/* ------------------------------------------------------------------ */
+
+method_name
+	: IDENTIFIER								{ $$ = $1; }
+	| ON										{ $$ = strdup("on"); }
 	;
 
-additive: additive ADD multiplicative					{ $$ = EzBinaryExprSemanticAction(EZ_BIN_ADD, $1, $3); }
-	| additive SUB multiplicative						{ $$ = EzBinaryExprSemanticAction(EZ_BIN_SUB, $1, $3); }
-	| multiplicative									{ $$ = $1; }
-	;
+/* ------------------------------------------------------------------ */
+/* Time literal                                                         */
+/* ------------------------------------------------------------------ */
 
-multiplicative: multiplicative MUL unary				{ $$ = EzBinaryExprSemanticAction(EZ_BIN_MUL, $1, $3); }
-	| multiplicative DIV unary							{ $$ = EzBinaryExprSemanticAction(EZ_BIN_DIV, $1, $3); }
-	| unary												{ $$ = $1; }
-	;
-
-unary: NOT unary										{ $$ = EzUnaryExprSemanticAction(EZ_UNARY_NOT, $2); }
-	| SUB unary %prec UMINUS							{ $$ = EzUnaryExprSemanticAction(EZ_UNARY_NEGATE, $2); }
-	| primary											{ $$ = $1; }
-	;
-
-method_name: IDENTIFIER									{ $$ = $1; }
-	| ON												{ $$ = strdup("on"); }
-	;
-
-primary: literal										{ $$ = EzLiteralExprSemanticAction($1); }
-	| IDENTIFIER										{ $$ = EzIdentifierExprSemanticAction($1); }
-	| IDENTIFIER DOT method_name OPEN_PARENTHESIS argument_list_opt CLOSE_PARENTHESIS
-														{ $$ = EzMethodCallExprSemanticAction($1, $3, $5); }
-	| OPEN_PARENTHESIS expression CLOSE_PARENTHESIS		{ $$ = $2; }
-	;
-
-literal: INTEGER										{ $$ = EzIntLiteralSemanticAction($1); }
-	| FLOAT												{ $$ = EzFloatLiteralSemanticAction($1); }
-	| BOOLEAN											{ $$ = EzBoolLiteralSemanticAction($1); }
-	| STRING											{ $$ = EzStringLiteralSemanticAction($1); }
-	| TIME												{ $$ = EzTimeLiteralSemanticAction($1); }
+time_literal
+	: TIME_LITERAL								{ $$ = $1; }
 	;
 
 %%

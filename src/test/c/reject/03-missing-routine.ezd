@@ -1,0 +1,6 @@
+// Falta el bloque routine — error sintactico puro
+// STAGE II: rechaza
+// Motivo: el programa debe tener exactamente un bloque hardware y uno routine
+hardware {
+    led alert_light on 13;
+}
