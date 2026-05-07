@@ -1,4 +1,5 @@
 #include "BisonActions.h"
+#include <string.h>
 
 /* MODULE INTERNAL STATE */
 
@@ -40,57 +41,114 @@ static StmtList * _appendToStmtList(StmtList * list, Stmt * stmt) {
 
 /* --- Hardware --- */
 
-Pin DigitalPinSemanticAction(int number) {
+ComponentType ComponentTypeSemanticAction(TokenLabel token) {
 	_log(__FUNCTION__);
-	return (Pin){ .kind = PIN_DIGITAL, .number = number };
+	switch (token) {
+		case LED:           return COMP_LED;
+		case BUZZER:        return COMP_BUZZER;
+		case BUTTON:        return COMP_BUTTON;
+		case POTENTIOMETER: return COMP_POTENTIOMETER;
+		case SERVO:         return COMP_SERVO;
+		case ULTRASONIC:    return COMP_ULTRASONIC;
+		case DHT11:         return COMP_DHT11;
+		case LCD:           return COMP_LCD;
+		default:            return COMP_LED;
+	}
 }
 
-Pin AnalogPinSemanticAction(int number) {
+PinSpec * IntegerPinSpecSemanticAction(int pin) {
 	_log(__FUNCTION__);
-	return (Pin){ .kind = PIN_ANALOG, .number = number };
+	PinSpec * ps = calloc(1, sizeof(PinSpec));
+	ps->type = PIN_SPEC_SINGLE_INT;
+	ps->singlePin = pin;
+	return ps;
 }
 
-HardwareDecl * SimpleHardwareDeclSemanticAction(HwDeviceType device, char * name, Pin pin) {
+PinSpec * IdentifierPinSpecSemanticAction(char * pinIdentifier) {
 	_log(__FUNCTION__);
-	HardwareDecl * d = calloc(1, sizeof(HardwareDecl));
-	d->kind = HD_SIMPLE;
-	d->name = name;
-	d->simple.device = device;
-	d->simple.pin = pin;
-	return d;
+	PinSpec * ps = calloc(1, sizeof(PinSpec));
+	ps->type = PIN_SPEC_SINGLE_IDENTIFIER;
+	ps->singleIdentifier = pinIdentifier;
+	return ps;
 }
 
-HardwareDecl * UltrasonicHardwareDeclSemanticAction(char * name, Pin trig, Pin echo) {
+PinSpec * NamedListPinSpecSemanticAction(PinSpecEntry * entries) {
 	_log(__FUNCTION__);
-	HardwareDecl * d = calloc(1, sizeof(HardwareDecl));
-	d->kind = HD_ULTRASONIC;
-	d->name = name;
-	d->ultrasonic.trig = trig;
-	d->ultrasonic.echo = echo;
-	return d;
+	PinSpec * ps = calloc(1, sizeof(PinSpec));
+	ps->type = PIN_SPEC_NAMED_LIST;
+	ps->namedPins = entries;
+	return ps;
 }
 
-HardwareDecl * LcdHardwareDeclSemanticAction(char * name) {
+PinSpec * IntListPinSpecSemanticAction(PinSpecEntry * entries) {
 	_log(__FUNCTION__);
-	HardwareDecl * d = calloc(1, sizeof(HardwareDecl));
-	d->kind = HD_LCD;
-	d->name = name;
-	return d;
+	PinSpec * ps = calloc(1, sizeof(PinSpec));
+	ps->type = PIN_SPEC_INT_LIST;
+	ps->intPins = entries;
+	return ps;
 }
 
-HardwareDecl * AppendHardwareDeclSemanticAction(HardwareDecl * list, HardwareDecl * decl) {
+PinSpecEntry * NewPinSpecEntryListSemanticAction(PinSpecEntry * entry) {
 	_log(__FUNCTION__);
-	if (list == NULL) return decl;
-	HardwareDecl * tail = list;
+	return entry;
+}
+
+PinSpecEntry * AppendPinSpecEntryListSemanticAction(PinSpecEntry * list, PinSpecEntry * entry) {
+	_log(__FUNCTION__);
+	if (list == NULL) return entry;
+	PinSpecEntry * tail = list;
 	while (tail->next != NULL) tail = tail->next;
-	tail->next = decl;
+	tail->next = entry;
 	return list;
 }
 
-HardwareBlock * HardwareBlockSemanticAction(HardwareDecl * decls) {
+PinSpecEntry * NamedPinEntrySemanticAction(char * name, int value) {
+	_log(__FUNCTION__);
+	PinSpecEntry * e = calloc(1, sizeof(PinSpecEntry));
+	e->name = name;
+	e->value = value;
+	return e;
+}
+
+PinSpecEntry * IntPinEntrySemanticAction(int value) {
+	_log(__FUNCTION__);
+	PinSpecEntry * e = calloc(1, sizeof(PinSpecEntry));
+	e->name = NULL;
+	e->value = value;
+	return e;
+}
+
+HardwareDecl * HardwareDeclSemanticAction(ComponentType ct, char * identifier, PinSpec * pinSpec) {
+	_log(__FUNCTION__);
+	HardwareDecl * d = calloc(1, sizeof(HardwareDecl));
+	d->componentType = ct;
+	d->identifier = identifier;
+	d->pinSpec = pinSpec;
+	return d;
+}
+
+HardwareDeclList * NewHardwareDeclListSemanticAction(HardwareDecl * decl) {
+	_log(__FUNCTION__);
+	HardwareDeclList * node = calloc(1, sizeof(HardwareDeclList));
+	node->declaration = decl;
+	return node;
+}
+
+HardwareDeclList * AppendHardwareDeclListSemanticAction(HardwareDeclList * list, HardwareDecl * decl) {
+	_log(__FUNCTION__);
+	HardwareDeclList * node = calloc(1, sizeof(HardwareDeclList));
+	node->declaration = decl;
+	if (list == NULL) return node;
+	HardwareDeclList * tail = list;
+	while (tail->next != NULL) tail = tail->next;
+	tail->next = node;
+	return list;
+}
+
+HardwareBlock * HardwareBlockSemanticAction(HardwareDeclList * decls) {
 	_log(__FUNCTION__);
 	HardwareBlock * b = calloc(1, sizeof(HardwareBlock));
-	b->decls = decls;
+	b->declarations = decls;
 	return b;
 }
 
@@ -139,20 +197,29 @@ Stmt * IfStmtSemanticAction(Expr * cond, StmtList * thenBranch, StmtList * elseB
 	return s;
 }
 
-Stmt * RepeatEveryStmtSemanticAction(StmtList * body, int intervalMs) {
+Stmt * RepeatEveryStmtSemanticAction(char * timeLiteral, StmtList * body) {
 	_log(__FUNCTION__);
 	Stmt * s = calloc(1, sizeof(Stmt));
 	s->type = STMT_REPEAT_EVERY;
+	s->repeatEvery.timeLiteral = timeLiteral;
 	s->repeatEvery.body = body;
-	s->repeatEvery.intervalMs = intervalMs;
 	return s;
 }
 
-Stmt * WaitStmtSemanticAction(int delayMs) {
+Stmt * RepeatTimesStmtSemanticAction(int count, StmtList * body) {
+	_log(__FUNCTION__);
+	Stmt * s = calloc(1, sizeof(Stmt));
+	s->type = STMT_REPEAT_TIMES;
+	s->repeatTimes.count = count;
+	s->repeatTimes.body = body;
+	return s;
+}
+
+Stmt * WaitStmtSemanticAction(char * timeLiteral) {
 	_log(__FUNCTION__);
 	Stmt * s = calloc(1, sizeof(Stmt));
 	s->type = STMT_WAIT;
-	s->wait.delayMs = delayMs;
+	s->wait.timeLiteral = timeLiteral;
 	return s;
 }
 
@@ -167,7 +234,7 @@ Stmt * ForRangeStmtSemanticAction(char * varName, Expr * from, Expr * to, StmtLi
 	return s;
 }
 
-/* --- Expressions --- */
+/* --- Arguments --- */
 
 ArgList * SingleArgSemanticAction(Expr * expr) {
 	_log(__FUNCTION__);
@@ -187,12 +254,14 @@ ArgList * AppendArgSemanticAction(ArgList * list, Expr * expr) {
 	return list;
 }
 
+/* --- Expressions --- */
+
 Expr * BinaryExprSemanticAction(Expr * left, Operator op, Expr * right) {
 	_log(__FUNCTION__);
 	Expr * e = calloc(1, sizeof(Expr));
 	e->type = EXPR_BINARY;
-	e->binary.left = left;
 	e->binary.op = op;
+	e->binary.left = left;
 	e->binary.right = right;
 	return e;
 }
@@ -206,11 +275,12 @@ Expr * UnaryExprSemanticAction(Operator op, Expr * operand) {
 	return e;
 }
 
-Expr * IdentifierExprSemanticAction(char * name) {
+Expr * MemberExprSemanticAction(char * object, char * member) {
 	_log(__FUNCTION__);
 	Expr * e = calloc(1, sizeof(Expr));
-	e->type = EXPR_IDENTIFIER;
-	e->identifier = name;
+	e->type = EXPR_MEMBER;
+	e->member.object = object;
+	e->member.member = member;
 	return e;
 }
 
@@ -224,12 +294,11 @@ Expr * CallExprSemanticAction(char * object, char * method, ArgList * args) {
 	return e;
 }
 
-Expr * MemberExprSemanticAction(char * object, char * member) {
+Expr * IdentifierExprSemanticAction(char * name) {
 	_log(__FUNCTION__);
 	Expr * e = calloc(1, sizeof(Expr));
-	e->type = EXPR_MEMBER;
-	e->member.object = object;
-	e->member.member = member;
+	e->type = EXPR_IDENTIFIER;
+	e->string = name;
 	return e;
 }
 
@@ -265,19 +334,11 @@ Expr * BoolExprSemanticAction(bool value) {
 	return e;
 }
 
-Expr * TimeExprSemanticAction(int timeMs) {
+Expr * TimeExprSemanticAction(char * timeLiteral) {
 	_log(__FUNCTION__);
 	Expr * e = calloc(1, sizeof(Expr));
 	e->type = EXPR_TIME;
-	e->timeMs = timeMs;
-	return e;
-}
-
-Expr * AnalogPinExprSemanticAction(int pin) {
-	_log(__FUNCTION__);
-	Expr * e = calloc(1, sizeof(Expr));
-	e->type = EXPR_ANALOG;
-	e->analogPin = pin;
+	e->string = timeLiteral;
 	return e;
 }
 
