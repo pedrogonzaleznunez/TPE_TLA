@@ -29,8 +29,8 @@ const int main(const int length, const char ** arguments) {
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	Program * program = compilerState.abstractSyntaxtTree;
 	// ---------------------------------------------------------------
-	// Stage III — Semantic Analysis + Code Generation (pendiente)
-	// Acá va: executeSemanticAnalysis(&compilerState) para validar
+	// Stage III — Analisis semantico + Generacion de codigo (pendiente)
+	// Aca va: executeSemanticAnalysis(&compilerState) para validar
 	//         componentes, pins y tipos; y executeCodeGenerator(&compilerState)
 	//         para emitir el sketch .ino de Arduino
 	// ---------------------------------------------------------------
