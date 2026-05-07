@@ -1,0 +1,10 @@
+hardware {
+    dht11 climate_sensor on 4;
+    lcd screen on (12, 11, 5, 4, 3, 2);
+}
+routine {
+    repeat every 2s {
+        var temp = climate_sensor.temperature();
+        screen.print(0, 0, temp);
+    }
+}

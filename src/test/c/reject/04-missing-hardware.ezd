@@ -1,0 +1,5 @@
+// Falta el bloque hardware — error sintactico puro
+// STAGE II: debe rechazar 
+routine {
+    alert_light.turn_on();
+}

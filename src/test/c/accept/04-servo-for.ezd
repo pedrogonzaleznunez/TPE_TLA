@@ -1,0 +1,8 @@
+hardware {
+    servo barrier on 9;
+}
+routine {
+    for i from 0 to 180 {
+        barrier.move(i);
+    }
+}

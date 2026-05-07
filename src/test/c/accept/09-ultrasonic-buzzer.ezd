@@ -1,0 +1,10 @@
+hardware {
+    ultrasonic radar on (trig: 9, echo: 10);
+    buzzer alarm on 8;
+}
+routine {
+    var current_distance = radar.read_distance();
+    if current_distance < 10 {
+        alarm.turn_on();
+    }
+}

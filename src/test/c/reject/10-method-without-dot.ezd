@@ -1,0 +1,8 @@
+// Llamada a metodo sin punto — error sintactico puro
+// STAGE II: debe rechazar 
+hardware {
+    led alert_light on 13;
+}
+routine {
+    alert_light turn_on();
+}

@@ -1,0 +1,5 @@
+// Falta el bloque routine — error sintactico puro
+// STAGE II: debe rechazar 
+hardware {
+    led alert_light on 13;
+}

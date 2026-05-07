@@ -1,0 +1,8 @@
+// Token invalido @ — error lexico puro
+// STAGE II: debe rechazar 
+hardware {
+    led alert_light on 13;
+}
+routine {
+    @invalid_token;
+}

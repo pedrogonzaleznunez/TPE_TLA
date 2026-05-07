@@ -1,0 +1,3 @@
+// Programa sin bloque hardware — error sintactico puro
+// STAGE II: debe rechazar
+routine {}

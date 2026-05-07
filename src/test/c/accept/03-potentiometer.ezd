@@ -1,0 +1,6 @@
+hardware {
+    potentiometer knob on A0;
+}
+routine {
+    var speed = knob.read_value();
+}

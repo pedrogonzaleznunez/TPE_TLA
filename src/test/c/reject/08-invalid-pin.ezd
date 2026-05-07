@@ -1,0 +1,9 @@
+// Pin inexistente en Arduino UNO (maximo pin digital: 13)
+// STAGE II: acepta (validacion semantica pendiente) 
+// STAGE III: debe rechazar 
+hardware {
+    led alert_light on 99;
+}
+routine {
+    alert_light.turn_on();
+}

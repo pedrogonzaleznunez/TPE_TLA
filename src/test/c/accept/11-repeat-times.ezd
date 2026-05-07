@@ -1,0 +1,8 @@
+hardware {
+    led blink_led on 13;
+}
+routine {
+    repeat 5 times {
+        blink_led.toggle();
+    }
+}

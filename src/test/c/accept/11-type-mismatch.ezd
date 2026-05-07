@@ -1,0 +1,9 @@
+// Operacion entre tipos incompatibles (string + time_literal)
+// STAGE II: acepta (+ en la gramatica, sin type checking)
+// STAGE III: debe rechazar por type mismatch
+hardware {
+    led alert_light on 13;
+}
+routine {
+    var result = "hola" + 200ms;
+}

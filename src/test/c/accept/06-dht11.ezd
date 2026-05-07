@@ -1,0 +1,7 @@
+hardware {
+    dht11 climate_sensor on 4;
+}
+routine {
+    var temp = climate_sensor.temperature();
+    var hum = climate_sensor.humidity();
+}

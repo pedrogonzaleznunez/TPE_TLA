@@ -1,0 +1,8 @@
+// Falta el identificador del componente — error sintactico puro
+// STAGE II: debe rechazar 
+hardware {
+    led on 13;
+}
+routine {
+    alert_light.turn_on();
+}

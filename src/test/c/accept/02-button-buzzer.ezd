@@ -1,0 +1,11 @@
+hardware {
+    button start on 2;
+    buzzer alarm on 8;
+}
+routine {
+    if start.is_pressed() == true {
+        alarm.turn_on();
+    } else {
+        alarm.turn_off();
+    }
+}
