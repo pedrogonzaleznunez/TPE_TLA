@@ -14,18 +14,16 @@
  * @see https://westes.github.io/flex/manual/Definitions-Section.html#Definitions-Section
  */
 
-extern CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label);
-extern CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context);
 extern CompilationStatus EOFLexemeAction();
-extern CompilationStatus IgnoredLexemeAction();
-extern CompilationStatus IdentifierLexemeAction();
-extern CompilationStatus IntegerLexemeAction();
-extern CompilationStatus LeaveMultilineCommentLexemeAction();
 extern CompilationStatus FloatLexemeAction();
+extern CompilationStatus IdentifierLexemeAction();
+extern CompilationStatus IgnoredLexemeAction();
+extern CompilationStatus IntegerLexemeAction();
+extern CompilationStatus KeywordLexemeAction(TokenLabel label);
+extern CompilationStatus OperatorLexemeAction(TokenLabel label);
 extern CompilationStatus StringLexemeAction();
-extern CompilationStatus TimeLexemeAction();
-extern CompilationStatus AnalogPinLexemeAction();
-extern CompilationStatus TokenLexemeAction(TokenLabel label);
+extern CompilationStatus SymbolLexemeAction(TokenLabel label);
+extern CompilationStatus TimeLiteralLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
 
 %}
@@ -44,13 +42,7 @@ extern CompilationStatus UnknownLexemeAction();
  * @see https://westes.github.io/flex/manual/Patterns.html
  */
 whitespace			[[:space:]]+
-identifier			[_a-zA-Z][_a-zA-Z0-9]*
-integer				[[:digit:]]+
-float				[[:digit:]]+\.[[:digit:]]+
-analog_pin			A[0-5]
-time_ms				[[:digit:]]+ms
-time_s				[[:digit:]]+s
-string				\"([^\\\n\"]|\\.)*\"
+comment				"//"[^\n]*
 
 %%
 
@@ -62,76 +54,71 @@ string				\"([^\\\n\"]|\\.)*\"
 
 %}
 
-"//"[^\n]*\n						{ return IgnoredLexemeAction(); }
+{comment}							{ return IgnoredLexemeAction(); }
+"/*"								{ BEGIN(MULTILINE_COMMENT); return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>"*/"				{ BEGIN(INITIAL); return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>\n				{ return IgnoredLexemeAction(); }
+<MULTILINE_COMMENT>.				{ return IgnoredLexemeAction(); }
 
-"{"									{ return TokenLexemeAction(LBRACE); }
-"}"									{ return TokenLexemeAction(RBRACE); }
+"hardware"							{ return KeywordLexemeAction(HARDWARE); }
+"routine"							{ return KeywordLexemeAction(ROUTINE); }
+"var"								{ return KeywordLexemeAction(VAR); }
+"if"								{ return KeywordLexemeAction(IF); }
+"else"								{ return KeywordLexemeAction(ELSE); }
+"for"								{ return KeywordLexemeAction(FOR); }
+"from"								{ return KeywordLexemeAction(FROM); }
+"to"								{ return KeywordLexemeAction(TO); }
+"repeat"							{ return KeywordLexemeAction(REPEAT); }
+"every"								{ return KeywordLexemeAction(EVERY); }
+"wait"								{ return KeywordLexemeAction(WAIT); }
+"times"								{ return KeywordLexemeAction(TIMES); }
+"on"								{ return KeywordLexemeAction(ON); }
+"and"								{ return KeywordLexemeAction(AND); }
+"or"								{ return KeywordLexemeAction(OR); }
+"not"								{ return KeywordLexemeAction(NOT); }
+"true"								{ return KeywordLexemeAction(TRUE); }
+"false"								{ return KeywordLexemeAction(FALSE); }
+"break"								{ return KeywordLexemeAction(BREAK); }
+"continue"							{ return KeywordLexemeAction(CONTINUE); }
 
-"/*"								{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
-<MULTILINE_COMMENT>"*/"				{ return LeaveMultilineCommentLexemeAction(); }
-<MULTILINE_COMMENT>.				{ /* ignore */ }
-<MULTILINE_COMMENT>\n				{ /* ignore */ }
+"led"								{ return KeywordLexemeAction(LED); }
+"buzzer"							{ return KeywordLexemeAction(BUZZER); }
+"button"							{ return KeywordLexemeAction(BUTTON); }
+"potentiometer"						{ return KeywordLexemeAction(POTENTIOMETER); }
+"servo"								{ return KeywordLexemeAction(SERVO); }
+"ultrasonic"						{ return KeywordLexemeAction(ULTRASONIC); }
+"dht11"								{ return KeywordLexemeAction(DHT11); }
+"lcd"								{ return KeywordLexemeAction(LCD); }
 
-"hardware"							{ return TokenLexemeAction(HARDWARE); }
-"routine"							{ return TokenLexemeAction(ROUTINE); }
-"var"								{ return TokenLexemeAction(VAR); }
-"if"								{ return TokenLexemeAction(IF); }
-"else"								{ return TokenLexemeAction(ELSE); }
-"repeat"							{ return TokenLexemeAction(REPEAT); }
-"every"								{ return TokenLexemeAction(EVERY); }
-"wait"								{ return TokenLexemeAction(WAIT); }
-"for"								{ return TokenLexemeAction(FOR); }
-"from"								{ return TokenLexemeAction(FROM); }
-"to"								{ return TokenLexemeAction(TO); }
-"times"								{ return TokenLexemeAction(TIMES); }
-"on"								{ return TokenLexemeAction(ON); }
+"=="								{ return OperatorLexemeAction(EQ); }
+"!="								{ return OperatorLexemeAction(NEQ); }
+"<="								{ return OperatorLexemeAction(LTE); }
+">="								{ return OperatorLexemeAction(GTE); }
+"<"									{ return OperatorLexemeAction(LT); }
+">"									{ return OperatorLexemeAction(GT); }
+"="									{ return OperatorLexemeAction(ASSIGN); }
+"+"									{ return OperatorLexemeAction(PLUS); }
+"-"									{ return OperatorLexemeAction(MINUS); }
+"*"									{ return OperatorLexemeAction(STAR); }
+"/"									{ return OperatorLexemeAction(SLASH); }
+"%"									{ return OperatorLexemeAction(PERCENT); }
 
-"led"								{ return TokenLexemeAction(KW_LED); }
-"buzzer"							{ return TokenLexemeAction(KW_BUZZER); }
-"button"							{ return TokenLexemeAction(KW_BUTTON); }
-"potentiometer"						{ return TokenLexemeAction(KW_POTENTIOMETER); }
-"servo"								{ return TokenLexemeAction(KW_SERVO); }
-"ultrasonic"						{ return TokenLexemeAction(KW_ULTRASONIC); }
-"dht11"								{ return TokenLexemeAction(KW_DHT11); }
-"lcd"								{ return TokenLexemeAction(KW_LCD); }
+"{"									{ return SymbolLexemeAction(OPEN_BRACE); }
+"}"									{ return SymbolLexemeAction(CLOSE_BRACE); }
+"("									{ return SymbolLexemeAction(OPEN_PARENTHESIS); }
+")"									{ return SymbolLexemeAction(CLOSE_PARENTHESIS); }
+";"									{ return SymbolLexemeAction(SEMICOLON); }
+"."									{ return SymbolLexemeAction(DOT); }
+","									{ return SymbolLexemeAction(COMMA); }
+":"									{ return SymbolLexemeAction(COLON); }
+"["									{ return SymbolLexemeAction(OPEN_BRACKET); }
+"]"									{ return SymbolLexemeAction(CLOSE_BRACKET); }
 
-"trig"								{ return TokenLexemeAction(KW_TRIG); }
-"echo"								{ return TokenLexemeAction(KW_ECHO); }
-
-"true"								{ return TokenLexemeAction(TRUE); }
-"false"								{ return TokenLexemeAction(FALSE); }
-
-"and"								{ return TokenLexemeAction(AND); }
-"or"								{ return TokenLexemeAction(OR); }
-"not"								{ return TokenLexemeAction(NOT); }
-
-"=="								{ return TokenLexemeAction(EQ); }
-"!="								{ return TokenLexemeAction(NE); }
-"<="								{ return TokenLexemeAction(LE); }
-">="								{ return TokenLexemeAction(GE); }
-"<"									{ return TokenLexemeAction(LT); }
-">"									{ return TokenLexemeAction(GT); }
-"="									{ return TokenLexemeAction(ASSIGN); }
-
-"+"									{ return TokenLexemeAction(PLUS); }
-"-"									{ return TokenLexemeAction(MINUS); }
-"*"									{ return TokenLexemeAction(STAR); }
-"/"									{ return TokenLexemeAction(SLASH); }
-
-"("									{ return TokenLexemeAction(LPAREN); }
-")"									{ return TokenLexemeAction(RPAREN); }
-";"									{ return TokenLexemeAction(SEMI); }
-","									{ return TokenLexemeAction(COMMA); }
-":"									{ return TokenLexemeAction(COLON); }
-"."									{ return TokenLexemeAction(DOT); }
-
-{float}									{ return FloatLexemeAction(); }
-{time_ms}								{ return TimeLexemeAction(); }
-{time_s}									{ return TimeLexemeAction(); }
-{analog_pin}							{ return AnalogPinLexemeAction(); }
-{string}									{ return StringLexemeAction(); }
-{integer}								{ return IntegerLexemeAction(); }
-{identifier}							{ return IdentifierLexemeAction(); }
+[0-9]+(ms|us|s)						{ return TimeLiteralLexemeAction(); }
+[0-9]+"."[0-9]+						{ return FloatLexemeAction(); }
+[0-9]+								{ return IntegerLexemeAction(); }
+\"[^\"]*\"							{ return StringLexemeAction(); }
+[a-zA-Z_][a-zA-Z0-9_]*				{ return IdentifierLexemeAction(); }
 
 {whitespace}						{ return IgnoredLexemeAction(); }
 .									{ return UnknownLexemeAction(); }
