@@ -34,7 +34,9 @@ RoutineBlock * RoutineBlockSemanticAction(StmtList * stmts);
 /* Statements */
 StmtList * AppendStmtSemanticAction(StmtList * list, Stmt * stmt);
 Stmt * CallStmtSemanticAction(char * object, char * method, ArgList * args);
+Stmt * AssignStmtSemanticAction(char * name, Expr * value);
 Stmt * VarStmtSemanticAction(char * name, Expr * value);
+Stmt * BlockStmtSemanticAction(StmtList * body);
 Stmt * IfStmtSemanticAction(Expr * cond, StmtList * thenBranch, StmtList * elseBranch);
 Stmt * RepeatEveryStmtSemanticAction(char * timeLiteral, StmtList * body);
 Stmt * RepeatTimesStmtSemanticAction(int count, StmtList * body);

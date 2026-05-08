@@ -60,7 +60,7 @@ struct Expr {
 /* ------------------------------------------------------------------ */
 
 typedef enum {
-	STMT_CALL, STMT_VAR, STMT_IF,
+	STMT_CALL, STMT_VAR, STMT_ASSIGN, STMT_BLOCK, STMT_IF,
 	STMT_REPEAT_EVERY, STMT_REPEAT_TIMES, STMT_WAIT, STMT_FOR_RANGE,
 } StmtType;
 
@@ -74,6 +74,8 @@ struct Stmt {
 	union {
 		struct { char * object; char * method; ArgList * args; } call;
 		struct { char * name; Expr * value; } var;
+		struct { char * name; Expr * value; } assign;
+		struct { StmtList * body; } block;
 		struct { Expr * cond; StmtList * thenBranch; StmtList * elseBranch; } if_;
 		struct { StmtList * body; char * timeLiteral; } repeatEvery;
 		struct { int count; StmtList * body; } repeatTimes;

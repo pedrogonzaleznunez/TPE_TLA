@@ -98,7 +98,7 @@ void yyerror(const YYLTYPE * location, const char * message) {
 /** Non-terminals. */
 %type <program> program
 %type <hardwareBlock> hardware_block
-%type <hardwareDeclList> hardware_decl_list
+%type <hardwareDeclList> hardware_decl_list hardware_decl_list_nonempty
 %type <hardwareDecl> hardware_decl
 %type <componentType> component_type
 %type <pinSpec> pin_spec
@@ -139,8 +139,13 @@ hardware_block
 	;
 
 hardware_decl_list
+	: %empty									{ $$ = NULL; }
+	| hardware_decl_list_nonempty						{ $$ = $1; }
+	;
+
+hardware_decl_list_nonempty
 	: hardware_decl								{ $$ = NewHardwareDeclListSemanticAction($1); }
-	| hardware_decl_list hardware_decl				{ $$ = AppendHardwareDeclListSemanticAction($1, $2); }
+	| hardware_decl_list_nonempty hardware_decl				{ $$ = AppendHardwareDeclListSemanticAction($1, $2); }
 	;
 
 hardware_decl
@@ -199,7 +204,9 @@ stmts
 stmt
 	: IDENTIFIER DOT method_name OPEN_PARENTHESIS args CLOSE_PARENTHESIS SEMICOLON
 												{ $$ = CallStmtSemanticAction($1, $3, $5); }
+	| IDENTIFIER ASSIGN expr SEMICOLON					{ $$ = AssignStmtSemanticAction($1, $3); }
 	| VAR IDENTIFIER ASSIGN expr SEMICOLON				{ $$ = VarStmtSemanticAction($2, $4); }
+	| OPEN_BRACE stmts CLOSE_BRACE					{ $$ = BlockStmtSemanticAction($2); }
 	| IF expr OPEN_BRACE stmts CLOSE_BRACE				{ $$ = IfStmtSemanticAction($2, $4, NULL); }
 	| IF expr OPEN_BRACE stmts CLOSE_BRACE ELSE OPEN_BRACE stmts CLOSE_BRACE
 												{ $$ = IfStmtSemanticAction($2, $4, $8); }

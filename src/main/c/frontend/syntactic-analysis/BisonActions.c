@@ -187,6 +187,23 @@ Stmt * VarStmtSemanticAction(char * name, Expr * value) {
 	return s;
 }
 
+Stmt * AssignStmtSemanticAction(char * name, Expr * value) {
+	_log(__FUNCTION__);
+	Stmt * s = calloc(1, sizeof(Stmt));
+	s->type = STMT_ASSIGN;
+	s->assign.name = name;
+	s->assign.value = value;
+	return s;
+}
+
+Stmt * BlockStmtSemanticAction(StmtList * body) {
+	_log(__FUNCTION__);
+	Stmt * s = calloc(1, sizeof(Stmt));
+	s->type = STMT_BLOCK;
+	s->block.body = body;
+	return s;
+}
+
 Stmt * IfStmtSemanticAction(Expr * cond, StmtList * thenBranch, StmtList * elseBranch) {
 	_log(__FUNCTION__);
 	Stmt * s = calloc(1, sizeof(Stmt));

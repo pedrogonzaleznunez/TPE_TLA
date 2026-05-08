@@ -71,6 +71,13 @@ void destroyStmt(Stmt * stmt) {
 			free(stmt->var.name);
 			destroyExpr(stmt->var.value);
 			break;
+		case STMT_ASSIGN:
+			free(stmt->assign.name);
+			destroyExpr(stmt->assign.value);
+			break;
+		case STMT_BLOCK:
+			destroyStmtList(stmt->block.body);
+			break;
 		case STMT_IF:
 			destroyExpr(stmt->if_.cond);
 			destroyStmtList(stmt->if_.thenBranch);
