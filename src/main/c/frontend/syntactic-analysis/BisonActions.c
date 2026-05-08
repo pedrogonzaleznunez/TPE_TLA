@@ -379,4 +379,3 @@ EzLiteral * EzTimeLiteralSemanticAction(EzTimeValue value) {
 	_log(__FUNCTION__);
 	return createEzTimeLiteral(value);
 }
-refactor: simplify logging in EZduino semantic actions
