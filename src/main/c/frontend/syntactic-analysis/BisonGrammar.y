@@ -84,7 +84,7 @@ void yyerror(const YYLTYPE * location, const char * message) {
 %token <string>  IDENTIFIER
 
 %token <token> HARDWARE ROUTINE VAR IF ELSE FOR FROM TO REPEAT EVERY WAIT TIMES ON
-%token <token> AND OR NOT TRUE FALSE BREAK CONTINUE
+%token <token> AND OR NOT TRUE FALSE
 %token <token> LED BUZZER BUTTON POTENTIOMETER SERVO ULTRASONIC DHT11 LCD
 
 %token <token> EQ NEQ LTE GTE LT GT ASSIGN

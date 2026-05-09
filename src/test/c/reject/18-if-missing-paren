@@ -1,8 +1,0 @@
-hardware {
-}
-
-routine {
-  if x > 0 {
-    wait 1s;
-  }
-}

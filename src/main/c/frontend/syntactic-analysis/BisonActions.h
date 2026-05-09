@@ -62,12 +62,4 @@ Expr * TimeExprSemanticAction(char * timeLiteral);
 /* Program */
 Program * ProgramSemanticAction(HardwareBlock * hardware, RoutineBlock * routine);
 
-// EZduino semantic actions.
-
-EzLiteral * EzIntLiteralSemanticAction(int value);
-EzLiteral * EzFloatLiteralSemanticAction(double value);
-EzLiteral * EzBoolLiteralSemanticAction(bool value);
-EzLiteral * EzStringLiteralSemanticAction(char * value);
-EzLiteral * EzTimeLiteralSemanticAction(EzTimeValue value);
-
 #endif

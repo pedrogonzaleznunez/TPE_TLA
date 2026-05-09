@@ -370,29 +370,3 @@ Program * ProgramSemanticAction(HardwareBlock * hardware, RoutineBlock * routine
 	return p;
 }
 
-// EZduino semantic actions.
-
-EzLiteral * EzIntLiteralSemanticAction(int value) {
-	_log(__FUNCTION__);
-	return createEzIntLiteral(value);
-}
-
-EzLiteral * EzFloatLiteralSemanticAction(double value) {
-	_log(__FUNCTION__);
-	return createEzFloatLiteral(value);
-}
-
-EzLiteral * EzBoolLiteralSemanticAction(bool value) {
-	_log(__FUNCTION__);
-	return createEzBoolLiteral(value);
-}
-
-EzLiteral * EzStringLiteralSemanticAction(char * value) {
-	_log(__FUNCTION__);
-	return createEzStringLiteral(value);
-}
-
-EzLiteral * EzTimeLiteralSemanticAction(EzTimeValue value) {
-	_log(__FUNCTION__);
-	return createEzTimeLiteral(value);
-}

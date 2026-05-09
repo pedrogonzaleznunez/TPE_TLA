@@ -78,8 +78,6 @@ comment				"//"[^\n]*
 "not"								{ return KeywordLexemeAction(NOT); }
 "true"								{ return KeywordLexemeAction(TRUE); }
 "false"								{ return KeywordLexemeAction(FALSE); }
-"break"								{ return KeywordLexemeAction(BREAK); }
-"continue"							{ return KeywordLexemeAction(CONTINUE); }
 
 "led"								{ return KeywordLexemeAction(LED); }
 "buzzer"							{ return KeywordLexemeAction(BUZZER); }
@@ -114,7 +112,7 @@ comment				"//"[^\n]*
 "["									{ return SymbolLexemeAction(OPEN_BRACKET); }
 "]"									{ return SymbolLexemeAction(CLOSE_BRACKET); }
 
-[0-9]+(ms|us|s)						{ return TimeLiteralLexemeAction(); }
+[0-9]+(ms|s)					    { return TimeLiteralLexemeAction(); }
 [0-9]+"."[0-9]+						{ return FloatLexemeAction(); }
 [0-9]+								{ return IntegerLexemeAction(); }
 \"[^\"]*\"							{ return StringLexemeAction(); }
