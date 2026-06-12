@@ -2,6 +2,7 @@
 #define SYMBOL_TABLE_HEADER
 
 #include "../../support/logging/Logger.h"
+#include "../../support/type/CompilationStatus.h"
 #include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
 #include <stdbool.h>
 
@@ -58,5 +59,66 @@ typedef struct SymbolTable {
 
 	Logger * logger;
 } SymbolTable;
+
+// Function prototypes
+
+/**
+ * Creates a new symbol table with the given number of hash buckets
+ * and pushes the global scope (level 0).
+ * Returns NULL on allocation failure.
+ */
+SymbolTable * createSymbolTable(int bucketCount, Logger * logger);
+
+/**
+ * Pushes a new scope onto the scope stack.
+ */
+void pushScope(SymbolTable * table);
+
+/**
+ * Pops the innermost scope, freeing all symbols declared in it.
+ * Cannot pop the global scope.
+ */
+void popScope(SymbolTable * table);
+
+/**
+ * Creates a new symbol in the current scope.
+ * Returns FAILED if a symbol with the same name already exists in the current scope,
+ * or SUCCEEDED on success.
+ */
+CompilationStatus createSymbol(
+	SymbolTable * table,
+	const char * name,
+	SymbolKind kind,
+	DataType dataType,
+	bool initialized,
+	ComponentType componentType,
+	int pin,
+	bool hasSinglePin,
+	int * pinList,
+	int pinCount
+);
+
+/**
+ * Updates the data type and initialization status of a symbol
+ * in the current scope only.
+ * Returns FAILED if the symbol is not found in the current scope.
+ */
+CompilationStatus updateSymbol(
+	SymbolTable * table,
+	const char * name,
+	DataType dataType,
+	bool initialized
+);
+
+/**
+ * Looks up a symbol by name, searching from the innermost scope outward.
+ * Returns NULL if the symbol is not found in any scope.
+ */
+SymbolEntry * lookupSymbol(SymbolTable * table, const char * name);
+
+/**
+ * Destroys the symbol table and frees all associated memory.
+ */
+void destroySymbolTable(SymbolTable * table);
 
 #endif
