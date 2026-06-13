@@ -357,9 +357,9 @@ static CompilationStatus collectHardwareDeclarations(
 			continue;
 		}
 
-		// Check: pin range and duplicates
+		// Check: pin range and duplicates (LCD pins can exceed 0-13, so skip for LCD)
 		bool pinsOk = true;
-		for (int i = 0; i < pinCount; i++) {
+		for (int i = 0; i < pinCount && decl->componentType != COMP_LCD; i++) {
 			int rawPin = pins[i];
 			bool isAnalog = false;
 			int effectivePin = rawPin;

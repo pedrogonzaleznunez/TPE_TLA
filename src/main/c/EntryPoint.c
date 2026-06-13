@@ -64,6 +64,10 @@ const int main(const int length, const char ** arguments) {
 	}
 	logDebugging(logger, "Releasing AST resources...");
 	destroyProgram(program);
+	if (compilerState.symbolTable != NULL) {
+		destroySymbolTable(compilerState.symbolTable);
+		compilerState.symbolTable = NULL;
+	}
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();
 	}

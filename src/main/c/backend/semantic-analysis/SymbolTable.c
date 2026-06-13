@@ -272,25 +272,38 @@ void destroySymbolTable(SymbolTable * table) {
 		return;
 	}
 
-	// Free all entries from all scopes (while also cleaning hash buckets)
-	for (int i = 0; i < table->scopeCount; i++) {
-		SymbolEntry * entry = table->scopes[i];
-		while (entry != NULL) {
-			SymbolEntry * next = entry->scopeNext;
-
-			// Remove from hash bucket (if not already removed by popScope)
-			unsigned int idx = hashString(entry->name, table->bucketCount);
-			SymbolEntry ** prevPtr = &(table->buckets[idx]);
-			while (*prevPtr != NULL) {
-				if (*prevPtr == entry) {
-					*prevPtr = entry->next;
-					break;
-				}
-				prevPtr = &((*prevPtr)->next);
+	if (table->preserve) {
+		// In preserve mode, popScope leaves entries in hash buckets even after
+		// nulling the scope-chain pointer. Iterate buckets to free everything.
+		for (int b = 0; b < table->bucketCount; b++) {
+			SymbolEntry * entry = table->buckets[b];
+			while (entry != NULL) {
+				SymbolEntry * next = entry->next;
+				freeSymbolEntry(entry);
+				entry = next;
 			}
+		}
+	} else {
+		// Standard mode: scope chains track every live entry.
+		for (int i = 0; i < table->scopeCount; i++) {
+			SymbolEntry * entry = table->scopes[i];
+			while (entry != NULL) {
+				SymbolEntry * next = entry->scopeNext;
 
-			freeSymbolEntry(entry);
-			entry = next;
+				// Remove from hash bucket (if not already removed by popScope)
+				unsigned int idx = hashString(entry->name, table->bucketCount);
+				SymbolEntry ** prevPtr = &(table->buckets[idx]);
+				while (*prevPtr != NULL) {
+					if (*prevPtr == entry) {
+						*prevPtr = entry->next;
+						break;
+					}
+					prevPtr = &((*prevPtr)->next);
+				}
+
+				freeSymbolEntry(entry);
+				entry = next;
+			}
 		}
 	}
 
