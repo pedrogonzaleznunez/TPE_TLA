@@ -10,7 +10,7 @@
  * Initialize the semantic analyzer module.
  * Returns a destructor that should be called on shutdown.
  */
-ModuleDestructor initializeSemanticAnalyzerModule();
+ModuleDestructor initializeSemanticAnalyzerModule(CompilerState * state);
 
 /**
  * Executes semantic analysis on the given compiler state.

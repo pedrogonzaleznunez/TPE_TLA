@@ -7,18 +7,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Module destructor                                                    
+// Module destructor
 
 static Logger * semanticLogger = NULL;
+static CompilerState * _compilerState = NULL;
 
 static void destroySemanticAnalyzerModule() {
+	if (_compilerState != NULL && _compilerState->symbolTable != NULL) {
+		destroySymbolTable(_compilerState->symbolTable);
+		_compilerState->symbolTable = NULL;
+	}
 	if (semanticLogger != NULL) {
 		destroyLogger(semanticLogger);
 		semanticLogger = NULL;
 	}
+	_compilerState = NULL;
 }
 
-ModuleDestructor initializeSemanticAnalyzerModule() {
+ModuleDestructor initializeSemanticAnalyzerModule(CompilerState * state) {
+	_compilerState = state;
 	semanticLogger = createLogger("SemanticAnalyzer");
 	if (semanticLogger == NULL) {
 		logCritical(NULL, "initializeSemanticAnalyzerModule: failed to create logger");
