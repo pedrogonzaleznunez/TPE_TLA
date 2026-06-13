@@ -1,11 +1,11 @@
 // Cubre: repeat every con var y llamadas anidadas, dos componentes
 hardware {
     dht11 climate_sensor on 4;
-    lcd screen on (12, 11, 5, 7, 3, 2);
+    lcd screen on (rs: 12, en: 11, d4: 5, d5: 6, d6: 3, d7: 2);
 }
 routine {
     repeat every 2s {
-        var temp = climate_sensor.temperature();
-        screen.print(0, 0, temp);
+        var temp = climate_sensor.read_temperature();
+        screen.print(temp);
     }
 }

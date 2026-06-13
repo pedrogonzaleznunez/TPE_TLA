@@ -1,8 +1,8 @@
 hardware {
   dht11 climate on 4;
-  lcd screen on 8;
+  lcd screen on (rs: 12, en: 11, d4: 5, d5: 6, d6: 3, d7: 2);
 }
 
 routine {
-  screen.print(climate.temperature());
+  screen.print(climate.read_temperature());
 }

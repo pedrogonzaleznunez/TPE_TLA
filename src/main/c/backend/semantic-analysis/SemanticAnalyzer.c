@@ -1289,11 +1289,17 @@ CompilationStatus executeSemanticAnalysis(CompilerState * state) {
 
 	CompilationStatus status = SUCCEEDED;
 
+	// Enable preserve mode so pass 1's popScope does not destroy entries.
+	// This way pass 2 can still find symbols declared in nested scopes.
+	setPreserveMode(state->symbolTable, true);
+
 	// Pass 1: collect declarations
 	CompilationStatus p1 = pass1(program, state->symbolTable, logger);
 	if (p1 == FAILED) status = FAILED;
 
 	// Pass 2: type checking (only if pass 1 succeeded)
+	// Preserve mode stays on so pass 2's own pushScope/popScope also
+	// does not destroy entries — destroySymbolTable will clean up at the end.
 	if (status == SUCCEEDED) {
 		CompilationStatus p2 = pass2(program, state->symbolTable, logger);
 		if (p2 == FAILED) status = FAILED;

@@ -4,5 +4,5 @@ hardware {
 
 routine {
   var angle = 45;
-  barrier.move(angle);
+  barrier.write(angle);
 }

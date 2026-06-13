@@ -1,0 +1,9 @@
+// Tipo de argumento incorrecto en metodo
+// STAGE III: debe rechazar
+// Motivo: led.on() espera un entero, no un string
+hardware {
+    led status on 2;
+}
+routine {
+    status.on("hello");
+}

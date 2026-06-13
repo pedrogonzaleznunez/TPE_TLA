@@ -1,0 +1,10 @@
+// Asignacion de tipo incompatible
+// STAGE III: debe rechazar
+// Motivo: no se puede asignar un string a una variable de tipo int
+hardware {
+    led status on 2;
+}
+routine {
+    var x = 10;
+    x = "hello";
+}

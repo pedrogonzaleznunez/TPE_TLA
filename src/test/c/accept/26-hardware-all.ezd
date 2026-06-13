@@ -1,12 +1,12 @@
 hardware {
   led status on 2;
   buzzer alarm on 3;
-  button start on 4;
-  potentiometer knob on 5;
+  button start on 5;
+  potentiometer knob on A0;
   servo gate on 6;
   ultrasonic radar on (trig: 7, echo: 8);
   dht11 climate on 9;
-  lcd display on 10;
+  lcd display on (rs: 10, en: 11, d4: 12, d5: 13, d6: 14, d7: 15);
 }
 
 routine {

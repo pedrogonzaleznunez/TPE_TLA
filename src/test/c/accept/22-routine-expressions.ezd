@@ -1,6 +1,6 @@
 hardware {
-  servo barrier on 6;
-  ultrasonic radar on (trig: 9, echo: 10);
+  servo barrier on 9;
+  ultrasonic radar on (trig: 10, echo: 11);
 }
 
 routine {
@@ -10,13 +10,13 @@ routine {
   var label = "hello";
 
   if (active and (speed > 10)) {
-    barrier.move(90);
+    barrier.write(90);
   } else {
     wait 2s;
   }
 
   repeat every 200ms {
-    barrier.move(speed);
+    barrier.write(speed);
   }
 
   repeat 3 times {

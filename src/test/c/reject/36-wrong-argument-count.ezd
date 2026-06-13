@@ -1,0 +1,9 @@
+// Cantidad de argumentos incorrecta en metodo
+// STAGE III: debe rechazar
+// Motivo: led.on() espera 1 argumento, se pasaron 2
+hardware {
+    led status on 2;
+}
+routine {
+    status.on(1, 2);
+}
