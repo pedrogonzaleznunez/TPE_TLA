@@ -61,14 +61,16 @@ typedef struct {
 // Maybe we can add more methods in the future
 
 static const ComponentMethodTable COMPONENT_METHODS[] = {
-	{ COMP_LED,           "LED",           3, {
+	{ COMP_LED,           "LED",           4, {
 		{ "turn_on",       TYPE_VOID,  0, {} },
 		{ "turn_off",      TYPE_VOID,  0, {} },
 		{ "on",            TYPE_VOID,  1, { TYPE_INT } },
+		{ "toggle",        TYPE_VOID,  0, {} },
 	}},
-	{ COMP_BUZZER,        "BUZZER",        2, {
+	{ COMP_BUZZER,        "BUZZER",        3, {
 		{ "turn_on",       TYPE_VOID,  0, {} },
 		{ "turn_off",      TYPE_VOID,  0, {} },
+		{ "beep",          TYPE_VOID,  1, { TYPE_INT } },
 	}},
 	{ COMP_BUTTON,        "BUTTON",        1, {
 		{ "is_pressed",    TYPE_BOOL,  0, {} },
@@ -76,18 +78,21 @@ static const ComponentMethodTable COMPONENT_METHODS[] = {
 	{ COMP_POTENTIOMETER, "POTENTIOMETER", 1, {
 		{ "read_value",    TYPE_INT,   0, {} },
 	}},
-	{ COMP_SERVO,         "SERVO",         1, {
+	{ COMP_SERVO,         "SERVO",         2, {
 		{ "write",         TYPE_VOID,  1, { TYPE_INT } },
+		{ "move",          TYPE_VOID,  1, { TYPE_INT } },
 	}},
 	{ COMP_ULTRASONIC,    "ULTRASONIC",    1, {
 		{ "read_distance", TYPE_FLOAT, 0, {} },
 	}},
-	{ COMP_DHT11,         "DHT11",         2, {
+	{ COMP_DHT11,         "DHT11",         4, {
 		{ "read_temperature", TYPE_FLOAT, 0, {} },
 		{ "read_humidity",    TYPE_FLOAT, 0, {} },
+		{ "temperature",   TYPE_FLOAT, 0, {} },
+		{ "humidity",      TYPE_FLOAT, 0, {} },
 	}},
 	{ COMP_LCD,           "LCD",           2, {
-		{ "print",         TYPE_VOID,  1, { TYPE_STRING } },
+		{ "print",         TYPE_VOID, -1, {} },
 		{ "clear",         TYPE_VOID,  0, {} },
 	}},
 };
@@ -115,7 +120,7 @@ static int getExpectedPinCount(ComponentType type) {
 		case COMP_SERVO:         return 1;
 		case COMP_ULTRASONIC:    return 2;
 		case COMP_DHT11:         return 1;
-		case COMP_LCD:           return 6;
+		case COMP_LCD:           return 0; // validateLcdPinNames handles it
 		default:                 return -1;
 	}
 }
@@ -243,21 +248,32 @@ static void addPin(int pin) {
 // Valid named pin names for components 
 
 static bool validateLcdPinNames(PinSpec * pinSpec) {
-	if (pinSpec->type != PIN_SPEC_NAMED_LIST) return false;
+	switch (pinSpec->type) {
+		case PIN_SPEC_SINGLE_INT:
+		case PIN_SPEC_SINGLE_IDENTIFIER:
+			// Single pin = I2C address
+			return true;
 
-	static const char * expected[] = { "rs", "en", "d4", "d5", "d6", "d7" };
-	int idx = 0;
-	PinSpecEntry * entry = pinSpec->namedPins;
-
-	while (entry != NULL && idx < 6) {
-		if (strcmp(entry->name, expected[idx]) != 0) {
-			return false;
+		case PIN_SPEC_INT_LIST: {
+			int count = 0;
+			PinSpecEntry * e = pinSpec->intPins;
+			while (e != NULL) { count++; e = e->next; }
+			return (count == 6);
 		}
-		entry = entry->next;
-		idx++;
-	}
 
-	return (idx == 6 && entry == NULL);
+		case PIN_SPEC_NAMED_LIST: {
+			static const char * expected[] = { "rs", "en", "d4", "d5", "d6", "d7" };
+			int idx = 0;
+			PinSpecEntry * entry = pinSpec->namedPins;
+			while (entry != NULL && idx < 6) {
+				if (strcmp(entry->name, expected[idx]) != 0) return false;
+				entry = entry->next;
+				idx++;
+			}
+			return (idx == 6 && entry == NULL);
+		}
+	}
+	return false;
 }
 
 static bool validateUltrasonicPinNames(PinSpec * pinSpec) {
@@ -681,6 +697,10 @@ static CompilationStatus checkMethodSignature(
 		return FAILED;
 	}
 
+	if (methodInfo->paramCount == -1) {
+		return SUCCEEDED;
+	}
+
 	// Count actual arguments
 	int argCount = 0;
 	ArgList * a = args;
@@ -1023,13 +1043,16 @@ static CompilationStatus validateStmt(Stmt * stmt, SymbolTable * table, Logger *
 		}
 
 		case STMT_VAR: {
+			DataType exprType = TYPE_UNKNOWN;
 			if (stmt->var.value != NULL) {
 				CompilationStatus exprStatus = SUCCEEDED;
-				DataType exprType = typeOf(stmt->var.value, table, logger, &exprStatus);
+				exprType = typeOf(stmt->var.value, table, logger, &exprStatus);
 				if (exprStatus == FAILED) {
 					status = FAILED;
 				}
 			}
+			createSymbol(table, stmt->var.name, SYM_VARIABLE, exprType,
+				(stmt->var.value != NULL), 0, -1, false, NULL, 0);
 			break;
 		}
 
@@ -1189,6 +1212,9 @@ static CompilationStatus validateStmt(Stmt * stmt, SymbolTable * table, Logger *
 					toType);
 				status = FAILED;
 			}
+
+			createSymbol(table, stmt->forRange.varName, SYM_FOR_LOOP_VAR, TYPE_INT,
+				true, 0, -1, false, NULL, 0);
 
 			pushScope(table);
 			if (stmt->forRange.body != NULL) {

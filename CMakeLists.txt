@@ -44,8 +44,9 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 		src/main/c/support/configuration/Environment.c
 		src/main/c/support/language/String.c
 		src/main/c/support/logging/Logger.c
-		# Add more *.c files if needed (otherwise, they won't be compiled).
-		# ...
+		src/main/c/backend/semantic-analysis/SymbolTable.c
+		src/main/c/backend/semantic-analysis/SemanticAnalyzer.c
+		src/main/c/backend/code-generation/Generator.c
 	)
 
 	# Link final project and libraries.

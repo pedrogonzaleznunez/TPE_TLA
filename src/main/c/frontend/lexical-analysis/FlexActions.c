@@ -80,6 +80,7 @@ static char * _unquoteStringLiteral(const char * lexeme) {
 
 CompilationStatus KeywordLexemeAction(TokenLabel label) {
 	Token * token = createToken(_lexicalAnalyzer, label);
+	token->semanticValue->token = label;
 	_logTokenAction(__FUNCTION__, token);
 	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
 	destroyToken(token);

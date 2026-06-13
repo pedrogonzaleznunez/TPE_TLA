@@ -285,6 +285,4 @@ void destroySymbolTable(SymbolTable * table) {
 	free(table->scopeIds);
 	free(table->buckets);
 	free(table);
-
-	logDebugging(NULL, "destroySymbolTable: symbol table destroyed");
 }

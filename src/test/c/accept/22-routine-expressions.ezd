@@ -1,5 +1,5 @@
 hardware {
-  servo barrier on 9;
+  servo barrier on 6;
   ultrasonic radar on (trig: 9, echo: 10);
 }
 

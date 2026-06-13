@@ -5,6 +5,8 @@
 #include "support/type/CompilationStatus.h"
 #include "support/type/CompilerState.h"
 #include "support/type/ModuleDestructor.h"
+#include "backend/semantic-analysis/SemanticAnalyzer.h"
+#include "backend/code-generation/Generator.h"
 
 /**
  * The main entry-point of the entire application. If you use "strtok" to
@@ -19,12 +21,15 @@ const int main(const int length, const char ** arguments) {
 	}
 	CompilerState compilerState = {
 		.abstractSyntaxtTree = NULL,
+		.outputPath = NULL,
 	};
 	ModuleDestructor moduleDestructors[] = {
 		initializeAbstractSyntaxTreeModule(),
 		initializeFlexActionsModule(lexicalAnalyzer),
 		initializeBisonActionsModule(&compilerState),
 		initializeFrontendModule(lexicalAnalyzer),
+		initializeSemanticAnalyzerModule(),
+		initializeGeneratorModule(),
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	Program * program = compilerState.abstractSyntaxtTree;
@@ -35,12 +40,23 @@ const int main(const int length, const char ** arguments) {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");
 		compilationStatus = FAILED;
 	}
-	// ---------------------------------------------------------------
-	// Stage III — Análisis semántico + Generación de código (pendiente)
-	// Aquí: executeSemanticAnalysis(&compilerState) y executeCodeGenerator(&compilerState)
-	// ---------------------------------------------------------------
+	if (compilationStatus == SUCCEEDED) {
+		logDebugging(logger, "Running semantic analysis...");
+		compilationStatus = executeSemanticAnalysis(&compilerState);
+	}
+	if (compilationStatus == SUCCEEDED) {
+		logDebugging(logger, "Running code generation...");
+		compilationStatus = executeGenerator(&compilerState);
+	}
+	if (compilationStatus != SUCCEEDED) {
+		logError(logger, "The compilation pipeline rejected the input program.");
+	}
 	logDebugging(logger, "Releasing AST resources...");
 	destroyProgram(program);
+	if (compilerState.symbolTable != NULL) {
+		destroySymbolTable(compilerState.symbolTable);
+		compilerState.symbolTable = NULL;
+	}
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
 		moduleDestructors[k]();
 	}
