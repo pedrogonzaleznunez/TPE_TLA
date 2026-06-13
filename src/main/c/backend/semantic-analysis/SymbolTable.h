@@ -57,6 +57,7 @@ typedef struct SymbolTable {
 	int currentScopeLevel;      // 0 = global, increments with each push 
 	int nextScopeId;
 
+	bool preserve;              // if true, popScope does NOT destroy entries
 	Logger * logger;
 } SymbolTable;
 
@@ -115,6 +116,15 @@ CompilationStatus updateSymbol(
  * Returns NULL if the symbol is not found in any scope.
  */
 SymbolEntry * lookupSymbol(SymbolTable * table, const char * name);
+
+/**
+ * Sets the preserve mode on the symbol table.
+ * When preserve is true, popScope does NOT destroy entries or remove them
+ * from hash buckets — it only adjusts the scope stack pointer.
+ * This is useful for multi-pass semantic analysis where pass 1 collects
+ * declarations and pass 2 needs to look them up.
+ */
+void setPreserveMode(SymbolTable * table, bool preserve);
 
 /**
  * Destroys the symbol table and frees all associated memory.

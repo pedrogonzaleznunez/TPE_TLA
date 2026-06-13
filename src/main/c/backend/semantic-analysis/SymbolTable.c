@@ -91,6 +91,8 @@ SymbolTable * createSymbolTable(int bucketCount, Logger * logger) {
 	table->currentScopeLevel = 0;
 	table->nextScopeId = 1;
 
+	table->preserve = false;
+
 	table->logger = logger;
 
 	logDebugging(logger, "SymbolTable created with %d buckets", table->bucketCount);
@@ -131,24 +133,26 @@ void popScope(SymbolTable * table) {
 	table->scopeCount--;
 	table->currentScopeLevel--;
 
-	// Free all entries in the scope being popped 
-	SymbolEntry * entry = table->scopes[table->scopeCount];
-	while (entry != NULL) {
-		SymbolEntry * next = entry->scopeNext;
+	if (!table->preserve) {
+		// Free all entries in the scope being popped 
+		SymbolEntry * entry = table->scopes[table->scopeCount];
+		while (entry != NULL) {
+			SymbolEntry * next = entry->scopeNext;
 
-		// Also remove from hash bucket chain
-		unsigned int idx = hashString(entry->name, table->bucketCount);
-		SymbolEntry ** prevPtr = &(table->buckets[idx]);
-		while (*prevPtr != NULL) {
-			if (*prevPtr == entry) {
-				*prevPtr = entry->next;
-				break;
+			// Also remove from hash bucket chain
+			unsigned int idx = hashString(entry->name, table->bucketCount);
+			SymbolEntry ** prevPtr = &(table->buckets[idx]);
+			while (*prevPtr != NULL) {
+				if (*prevPtr == entry) {
+					*prevPtr = entry->next;
+					break;
+				}
+				prevPtr = &((*prevPtr)->next);
 			}
-			prevPtr = &((*prevPtr)->next);
-		}
 
-		freeSymbolEntry(entry);
-		entry = next;
+			freeSymbolEntry(entry);
+			entry = next;
+		}
 	}
 
 	table->scopes[table->scopeCount] = NULL;
@@ -252,6 +256,15 @@ SymbolEntry * lookupSymbol(SymbolTable * table, const char * name) {
 	logDebugging(table->logger,
 		"lookupSymbol: '%s' not found in any scope", name);
 	return NULL;
+}
+
+void setPreserveMode(SymbolTable * table, bool preserve) {
+	if (table == NULL) {
+		return;
+	}
+	table->preserve = preserve;
+	logDebugging(table->logger,
+		"setPreserveMode: preserve = %s", preserve ? "true" : "false");
 }
 
 void destroySymbolTable(SymbolTable * table) {
