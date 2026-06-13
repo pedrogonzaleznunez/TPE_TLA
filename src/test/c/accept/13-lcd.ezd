@@ -1,8 +1,8 @@
-// Cubre: LCD con int list pin spec, print con coordenadas
+// Cubre: LCD con named pin spec, print y clear
 hardware {
-    lcd screen on (12, 11, 5, 4, 3, 2);
+    lcd screen on (rs: 12, en: 11, d4: 5, d5: 4, d6: 3, d7: 2);
 }
 routine {
     screen.clear();
-    screen.print(0, 0, "System Ready");
+    screen.print("System Ready");
 }

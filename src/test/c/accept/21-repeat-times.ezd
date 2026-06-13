@@ -4,6 +4,8 @@ hardware {
 }
 routine {
     repeat 5 times {
-        blink_led.toggle();
+        blink_led.turn_on();
+        wait 100ms;
+        blink_led.turn_off();
     }
 }

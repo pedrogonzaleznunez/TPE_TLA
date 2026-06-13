@@ -1,0 +1,12 @@
+// Condicion de if no booleana
+// STAGE III: debe rechazar
+// Motivo: la condicion del if debe ser booleana, no entera
+hardware {
+    led status on 2;
+}
+routine {
+    var x = 10;
+    if (x) {
+        status.turn_on();
+    }
+}

@@ -4,6 +4,8 @@ hardware {
 
 routine {
   repeat every 1s {
-    alarm.beep(1);
+    alarm.turn_on();
+    wait 100ms;
+    alarm.turn_off();
   }
 }

@@ -6,5 +6,5 @@ hardware {
 routine {
     var angle = 90 + 45;
     var speed = angle / 2;
-    barrier.move(speed);
+    barrier.write(speed);
 }

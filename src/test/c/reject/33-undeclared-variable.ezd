@@ -1,0 +1,9 @@
+// Variable usada sin declarar
+// STAGE III: debe rechazar
+// Motivo: 'x' no esta declarada en ningun scope
+hardware {
+    led status on 2;
+}
+routine {
+    status.on(x);
+}

@@ -1,0 +1,11 @@
+// Operador logico con operandos numericos
+// STAGE III: debe rechazar
+// Motivo: 'and' requiere operandos booleanos, no enteros
+hardware {
+    led status on 2;
+}
+routine {
+    if (1 and 2) {
+        status.turn_on();
+    }
+}

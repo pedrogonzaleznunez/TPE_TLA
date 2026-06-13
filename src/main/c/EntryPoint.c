@@ -1,6 +1,8 @@
 #include "frontend/Frontend.h"
 #include "frontend/lexical-analysis/FlexActions.h"
 #include "frontend/syntactic-analysis/BisonActions.h"
+#include "backend/semantic-analysis/SemanticAnalyzer.h"
+#include "backend/code-generation/Generator.h"
 #include "support/logging/Logger.h"
 #include "support/type/CompilationStatus.h"
 #include "support/type/CompilerState.h"
@@ -19,26 +21,47 @@ const int main(const int length, const char ** arguments) {
 	}
 	CompilerState compilerState = {
 		.abstractSyntaxtTree = NULL,
+		.symbolTable = NULL,
+		.outputPath = NULL,
+		.logger = logger,
 	};
 	ModuleDestructor moduleDestructors[] = {
 		initializeAbstractSyntaxTreeModule(),
 		initializeFlexActionsModule(lexicalAnalyzer),
 		initializeBisonActionsModule(&compilerState),
 		initializeFrontendModule(lexicalAnalyzer),
+		initializeSemanticAnalyzerModule(),
+		initializeGeneratorModule(),
 	};
 	CompilationStatus compilationStatus = executeSyntacticAnalysis();
 	Program * program = compilerState.abstractSyntaxtTree;
 	if (compilationStatus == SUCCEEDED) {
 		logDebugging(logger, "Frontend completed successfully.");
+
+		// Stage III — Semantic Analysis
+		compilationStatus = executeSemanticAnalysis(&compilerState);
+		if (compilationStatus == SUCCEEDED) {
+			logDebugging(logger, "Semantic analysis completed successfully.");
+
+			// Stage III — Code Generation
+			compilationStatus = executeGenerator(&compilerState);
+			if (compilationStatus == SUCCEEDED) {
+				logDebugging(logger, "Code generation completed successfully.");
+			}
+			else {
+				logError(logger, "The code-generation phase rejects the input program.");
+				compilationStatus = FAILED;
+			}
+		}
+		else {
+			logError(logger, "The semantic-analysis phase rejects the input program.");
+			compilationStatus = FAILED;
+		}
 	}
 	else {
 		logError(logger, "The syntactic-analysis phase rejects the input program.");
 		compilationStatus = FAILED;
 	}
-	// ---------------------------------------------------------------
-	// Stage III — Análisis semántico + Generación de código (pendiente)
-	// Aquí: executeSemanticAnalysis(&compilerState) y executeCodeGenerator(&compilerState)
-	// ---------------------------------------------------------------
 	logDebugging(logger, "Releasing AST resources...");
 	destroyProgram(program);
 	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
