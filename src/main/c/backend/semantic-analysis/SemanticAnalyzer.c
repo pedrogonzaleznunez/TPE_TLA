@@ -45,6 +45,7 @@ static CompilationStatus collectHardwareDeclarations(Program * program, SymbolTa
 static CompilationStatus collectRoutineDeclarations(StmtList * stmts, SymbolTable * table, Logger * logger);
 
 static DataType typeOf(Expr * expr, SymbolTable * table, Logger * logger, CompilationStatus * status);
+static DataType _typeOfImpl(Expr * expr, SymbolTable * table, Logger * logger, CompilationStatus * status);
 static CompilationStatus validateStmt(Stmt * stmt, SymbolTable * table, Logger * logger);
 static CompilationStatus validateExprStmtCall(char * object, char * method, ArgList * args, SymbolTable * table, Logger * logger);
 static CompilationStatus checkMethodSignature(const char * componentName, ComponentType compType, const char * method, ArgList * args, SymbolTable * table, Logger * logger);
@@ -759,6 +760,14 @@ static CompilationStatus checkMethodSignature(
 static DataType typeOf(Expr * expr, SymbolTable * table, Logger * logger,
 	CompilationStatus * status)
 {
+	DataType result = _typeOfImpl(expr, table, logger, status);
+	if (expr != NULL) expr->resolvedType = result;
+	return result;
+}
+
+static DataType _typeOfImpl(Expr * expr, SymbolTable * table, Logger * logger,
+	CompilationStatus * status)
+{
 	if (expr == NULL) {
 		*status = FAILED;
 		return TYPE_ERROR;
@@ -1058,8 +1067,6 @@ static CompilationStatus validateStmt(Stmt * stmt, SymbolTable * table, Logger *
 					status = FAILED;
 				}
 			}
-			createSymbol(table, stmt->var.name, SYM_VARIABLE, exprType,
-				(stmt->var.value != NULL), 0, -1, false, NULL, 0);
 			break;
 		}
 
@@ -1219,9 +1226,6 @@ static CompilationStatus validateStmt(Stmt * stmt, SymbolTable * table, Logger *
 					toType);
 				status = FAILED;
 			}
-
-			createSymbol(table, stmt->forRange.varName, SYM_FOR_LOOP_VAR, TYPE_INT,
-				true, 0, -1, false, NULL, 0);
 
 			pushScope(table);
 			if (stmt->forRange.body != NULL) {
