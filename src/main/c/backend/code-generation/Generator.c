@@ -386,3 +386,110 @@ static const char * varTypeFromExpr(Expr * expr) {
 }
 
 /* STATEMENTS */
+
+static void generateStmtList(GeneratorContext * ctx, StmtList * stmts) {
+	for (StmtList * node = stmts; node != NULL; node = node->next) {
+		if (node->stmt != NULL) {
+			generateStmt(ctx, node->stmt);
+		}
+	}
+}
+
+static void generateStmt(GeneratorContext * ctx, Stmt * stmt) {
+	if (stmt == NULL) {
+		return;
+	}
+
+	switch (stmt->type) {
+		case STMT_CALL:
+			indent(ctx);
+			generateMethodCall(ctx, stmt->call.object, stmt->call.method, stmt->call.args, true);
+			output(ctx, ";\n");
+			break;
+		case STMT_VAR:
+			indent(ctx);
+			output(ctx, "%s %s = ", varTypeFromExpr(stmt->var.value), stmt->var.name);
+			generateExpr(ctx, stmt->var.value);
+			output(ctx, ";\n");
+			break;
+		case STMT_ASSIGN:
+			indent(ctx);
+			output(ctx, "%s = ", stmt->assign.name);
+			generateExpr(ctx, stmt->assign.value);
+			output(ctx, ";\n");
+			break;
+		case STMT_BLOCK:
+			indent(ctx);
+			output(ctx, "{\n");
+			ctx->indent++;
+			generateStmtList(ctx, stmt->block.body);
+			ctx->indent--;
+			indent(ctx);
+			output(ctx, "}\n");
+			break;
+		case STMT_IF:
+			indent(ctx);
+			output(ctx, "if (");
+			generateExpr(ctx, stmt->if_.cond);
+			output(ctx, ") {\n");
+			ctx->indent++;
+			generateStmtList(ctx, stmt->if_.thenBranch);
+			ctx->indent--;
+			indent(ctx);
+			output(ctx, "}");
+			if (stmt->if_.elseBranch != NULL) {
+				output(ctx, " else {\n");
+				ctx->indent++;
+				generateStmtList(ctx, stmt->if_.elseBranch);
+				ctx->indent--;
+				indent(ctx);
+				output(ctx, "}");
+			}
+			output(ctx, "\n");
+			break;
+		case STMT_REPEAT_EVERY: {
+			int id = ctx->repeatEveryCounter++;
+			int timeoutMs = parseTimeLiteralMs(stmt->repeatEvery.timeLiteral);
+			indent(ctx);
+			output(ctx, "if (millis() - last_millis_%d >= %d) {\n", id, timeoutMs);
+			ctx->indent++;
+			indent(ctx);
+			output(ctx, "last_millis_%d = millis();\n", id);
+			generateStmtList(ctx, stmt->repeatEvery.body);
+			ctx->indent--;
+			indent(ctx);
+			output(ctx, "}\n");
+			break;
+		}
+		case STMT_REPEAT_TIMES:
+			indent(ctx);
+			output(ctx, "for (int __i = 0; __i < %d; __i++) {\n", stmt->repeatTimes.count);
+			ctx->indent++;
+			generateStmtList(ctx, stmt->repeatTimes.body);
+			ctx->indent--;
+			indent(ctx);
+			output(ctx, "}\n");
+			break;
+		case STMT_WAIT:
+			indent(ctx);
+			output(ctx, "delay(%d);\n", parseTimeLiteralMs(stmt->wait.timeLiteral));
+			break;
+		case STMT_FOR_RANGE:
+			indent(ctx);
+			output(ctx, "for (int %s = ", stmt->forRange.varName);
+			generateExpr(ctx, stmt->forRange.from);
+			output(ctx, "; %s <= ", stmt->forRange.varName);
+			generateExpr(ctx, stmt->forRange.to);
+			output(ctx, "; %s++) {\n", stmt->forRange.varName);
+			ctx->indent++;
+			generateStmtList(ctx, stmt->forRange.body);
+			ctx->indent--;
+			indent(ctx);
+			output(ctx, "}\n");
+			break;
+		default:
+			break;
+	}
+}
+
+/* HARDWARE GENERATION */
