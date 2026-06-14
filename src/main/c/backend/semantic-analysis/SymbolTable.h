@@ -6,19 +6,6 @@
 #include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
 #include <stdbool.h>
 
-// Data types for the symbol table                                  
-
-typedef enum {
-	TYPE_INT,
-	TYPE_FLOAT,
-	TYPE_STRING,
-	TYPE_BOOL,
-	TYPE_TIME,
-	TYPE_VOID,
-	TYPE_ERROR,
-	TYPE_UNKNOWN
-} DataType;
-
 typedef enum {
 	SYM_HARDWARE,
 	SYM_VARIABLE,

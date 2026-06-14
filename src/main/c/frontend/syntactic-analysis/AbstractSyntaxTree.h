@@ -36,6 +36,17 @@ typedef enum {
 	EXPR_IDENTIFIER, EXPR_MEMBER, EXPR_CALL, EXPR_BINARY, EXPR_UNARY,
 } ExprType;
 
+typedef enum {
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_STRING,
+	TYPE_BOOL,
+	TYPE_TIME,
+	TYPE_VOID,
+	TYPE_ERROR,
+	TYPE_UNKNOWN
+} DataType;
+
 struct ArgList {
 	Expr * expr;
 	ArgList * next;
@@ -43,6 +54,7 @@ struct ArgList {
 
 struct Expr {
 	ExprType type;
+	DataType resolvedType;
 	union {
 		int integer;
 		double number;
