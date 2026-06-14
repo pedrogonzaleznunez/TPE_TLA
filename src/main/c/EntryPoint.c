@@ -7,6 +7,7 @@
 #include "support/type/CompilationStatus.h"
 #include "support/type/CompilerState.h"
 #include "support/type/ModuleDestructor.h"
+#include <string.h>
 
 /**
  * The main entry-point of the entire application. If you use "strtok" to
@@ -14,6 +15,14 @@
  * find you, and I will kill you (Bryan Mills; "Taken", 2008).
  */
 const int main(const int length, const char ** arguments) {
+	char * outputPath = NULL;
+	for (int i = 1; i < length; ++i) {
+		if (strcmp(arguments[i], "-o") == 0 && i + 1 < length) {
+			outputPath = (char *)arguments[i + 1];
+			++i;
+		}
+	}
+
 	LexicalAnalyzer * lexicalAnalyzer = createLexicalAnalyzer();
 	Logger * logger = createLogger("EntryPoint");
 	for (int k = 0; k < length; ++k) {
@@ -22,7 +31,7 @@ const int main(const int length, const char ** arguments) {
 	CompilerState compilerState = {
 		.abstractSyntaxtTree = NULL,
 		.symbolTable = NULL,
-		.outputPath = NULL,
+		.outputPath = outputPath,
 		.logger = logger,
 	};
 	ModuleDestructor moduleDestructors[] = {

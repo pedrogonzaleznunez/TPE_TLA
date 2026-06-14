@@ -493,3 +493,273 @@ static void generateStmt(GeneratorContext * ctx, Stmt * stmt) {
 }
 
 /* HARDWARE GENERATION */
+
+static void generatePinDefines(GeneratorContext * ctx, HardwareDecl * decl) {
+	char pinBuf[16];
+	char * upper = strdupUpper(decl->identifier);
+	if (upper == NULL) {
+		return;
+	}
+
+	switch (decl->componentType) {
+		case COMP_ULTRASONIC: {
+			int trig = findNamedPin(decl->pinSpec, "trig");
+			int echo = findNamedPin(decl->pinSpec, "echo");
+			formatPin(trig, pinBuf, sizeof(pinBuf));
+			output(ctx, "#define PIN_%s_TRIG %s\n", upper, pinBuf);
+			formatPin(echo, pinBuf, sizeof(pinBuf));
+			output(ctx, "#define PIN_%s_ECHO %s\n", upper, pinBuf);
+			break;
+		}
+		case COMP_LCD: {
+			const char * names[] = { "rs", "en", "d4", "d5", "d6", "d7" };
+			for (int i = 0; i < 6; ++i) {
+				int pin = findNamedPin(decl->pinSpec, names[i]);
+				formatPin(pin, pinBuf, sizeof(pinBuf));
+				output(ctx, "#define PIN_%s_%s %s\n", upper, names[i], pinBuf);
+			}
+			break;
+		}
+		default: {
+			int pin = extractSinglePin(decl->pinSpec);
+			formatPin(pin, pinBuf, sizeof(pinBuf));
+			output(ctx, "#define PIN_%s %s\n", upper, pinBuf);
+			break;
+		}
+	}
+
+	free(upper);
+}
+
+static void generateGlobalInstances(GeneratorContext * ctx, HardwareDecl * decl) {
+	switch (decl->componentType) {
+		case COMP_DHT11: {
+			char pinBuf[16];
+			char * upper = strdupUpper(decl->identifier);
+			int pin = extractSinglePin(decl->pinSpec);
+			formatPin(pin, pinBuf, sizeof(pinBuf));
+			output(ctx, "DHT %s(PIN_%s, DHT11);\n", decl->identifier, upper);
+			free(upper);
+			break;
+		}
+		case COMP_SERVO:
+			output(ctx, "Servo %s;\n", decl->identifier);
+			break;
+		case COMP_LCD: {
+			char * upper = strdupUpper(decl->identifier);
+			output(ctx,
+				"LiquidCrystal %s(PIN_%s_rs, PIN_%s_en, PIN_%s_d4, PIN_%s_d5, PIN_%s_d6, PIN_%s_d7);\n",
+				decl->identifier, upper, upper, upper, upper, upper, upper);
+			free(upper);
+			break;
+		}
+		default:
+			break;
+	}
+}
+
+static void generateSetupForDecl(GeneratorContext * ctx, HardwareDecl * decl) {
+	char * upper = strdupUpper(decl->identifier);
+	if (upper == NULL) {
+		return;
+	}
+
+	switch (decl->componentType) {
+		case COMP_LED:
+		case COMP_BUZZER:
+			indent(ctx);
+			output(ctx, "pinMode(PIN_%s, OUTPUT);\n", upper);
+			break;
+		case COMP_BUTTON:
+			indent(ctx);
+			output(ctx, "pinMode(PIN_%s, INPUT);\n", upper);
+			break;
+		case COMP_SERVO:
+			indent(ctx);
+			output(ctx, "%s.attach(PIN_%s);\n", decl->identifier, upper);
+			break;
+		case COMP_ULTRASONIC:
+			indent(ctx);
+			output(ctx, "pinMode(PIN_%s_TRIG, OUTPUT);\n", upper);
+			indent(ctx);
+			output(ctx, "pinMode(PIN_%s_ECHO, INPUT);\n", upper);
+			break;
+		case COMP_DHT11:
+			indent(ctx);
+			output(ctx, "%s.begin();\n", decl->identifier);
+			break;
+		case COMP_LCD:
+			indent(ctx);
+			output(ctx, "%s.begin(16, 2);\n", decl->identifier);
+			break;
+		default:
+			break;
+	}
+
+	free(upper);
+}
+
+static void generateRoutineGlobals(GeneratorContext * ctx, StmtList * stmts) {
+	for (StmtList * node = stmts; node != NULL; node = node->next) {
+		Stmt * stmt = node->stmt;
+		if (stmt != NULL && stmt->type == STMT_VAR) {
+			output(ctx, "%s %s = ", varTypeFromExpr(stmt->var.value), stmt->var.name);
+			generateExpr(ctx, stmt->var.value);
+			output(ctx, ";\n");
+		}
+	}
+}
+
+static void generateLoopBody(GeneratorContext * ctx, StmtList * stmts) {
+	for (StmtList * node = stmts; node != NULL; node = node->next) {
+		Stmt * stmt = node->stmt;
+		if (stmt == NULL) {
+			continue;
+		}
+		if (stmt->type == STMT_VAR) {
+			/* top-level routine vars are emitted as globals */
+			continue;
+		}
+		generateStmt(ctx, stmt);
+	}
+}
+
+static CompilationStatus generateProgram(GeneratorContext * ctx, Program * program) {
+	if (program == NULL) {
+		logError(_logger, "Generator: null program");
+		return FAILED;
+	}
+
+	HardwareBlock * hardware = program->hardware;
+	RoutineBlock * routine = program->routine;
+
+	if (hardware != NULL) {
+		scanHardwareNeeds(hardware->declarations, ctx);
+	}
+
+	if (ctx->needsLiquidCrystal) {
+		output(ctx, "#include <LiquidCrystal.h>\n");
+	}
+	if (ctx->needsDht) {
+		output(ctx, "#include <DHT.h>\n");
+	}
+	if (ctx->needsServo) {
+		output(ctx, "#include <Servo.h>\n");
+	}
+	output(ctx, "\n");
+
+	if (hardware != NULL) {
+		for (HardwareDeclList * node = hardware->declarations; node != NULL; node = node->next) {
+			if (node->declaration != NULL) {
+				generatePinDefines(ctx, node->declaration);
+			}
+		}
+		output(ctx, "\n");
+	}
+
+	if (ctx->needsUltrasonic) {
+		output(ctx, "float readUltrasonicDistance(int trigPin, int echoPin) {\n");
+		output(ctx, "  digitalWrite(trigPin, LOW);\n");
+		output(ctx, "  delayMicroseconds(2);\n");
+		output(ctx, "  digitalWrite(trigPin, HIGH);\n");
+		output(ctx, "  delayMicroseconds(10);\n");
+		output(ctx, "  digitalWrite(trigPin, LOW);\n");
+		output(ctx, "  long duration = pulseIn(echoPin, HIGH);\n");
+		output(ctx, "  return duration * 0.034 / 2;\n");
+		output(ctx, "}\n\n");
+	}
+
+	if (hardware != NULL) {
+		for (HardwareDeclList * node = hardware->declarations; node != NULL; node = node->next) {
+			if (node->declaration != NULL) {
+				generateGlobalInstances(ctx, node->declaration);
+			}
+		}
+		if (hardware->declarations != NULL) {
+			output(ctx, "\n");
+		}
+	}
+
+	int repeatEveryCount = 0;
+	if (routine != NULL) {
+		countRepeatEvery(routine->stmts, &repeatEveryCount);
+	}
+	for (int i = 0; i < repeatEveryCount; ++i) {
+		output(ctx, "unsigned long last_millis_%d = 0;\n", i);
+	}
+
+	if (routine != NULL) {
+		generateRoutineGlobals(ctx, routine->stmts);
+		if (routine->stmts != NULL) {
+			output(ctx, "\n");
+		}
+	}
+
+	output(ctx, "void setup() {\n");
+	ctx->indent = 1;
+	if (hardware != NULL) {
+		for (HardwareDeclList * node = hardware->declarations; node != NULL; node = node->next) {
+			if (node->declaration != NULL) {
+				generateSetupForDecl(ctx, node->declaration);
+			}
+		}
+	}
+	ctx->indent = 0;
+	output(ctx, "}\n\n");
+
+	output(ctx, "void loop() {\n");
+	ctx->indent = 1;
+	if (routine != NULL) {
+		generateLoopBody(ctx, routine->stmts);
+	}
+	output(ctx, "}\n");
+
+	return SUCCEEDED;
+}
+
+/** PUBLIC FUNCTIONS */
+
+CompilationStatus executeGenerator(CompilerState * compilerState) {
+	if (compilerState == NULL) {
+		return FAILED;
+	}
+
+	Program * program = (Program *)compilerState->abstractSyntaxtTree;
+	FILE * outFile = stdout;
+	bool closeFile = false;
+
+	if (compilerState->outputPath != NULL) {
+		outFile = fopen(compilerState->outputPath, "w");
+		if (outFile == NULL) {
+			logError(_logger, "Generator: cannot open output file '%s'", compilerState->outputPath);
+			return FAILED;
+		}
+		closeFile = true;
+	}
+
+	GeneratorContext ctx = {
+		.out = outFile,
+		.indent = 0,
+		.repeatEveryCounter = 0,
+		.needsLiquidCrystal = false,
+		.needsDht = false,
+		.needsServo = false,
+		.needsUltrasonic = false,
+	};
+
+	logDebugging(_logger, "Generating Arduino code...");
+	CompilationStatus status = generateProgram(&ctx, program);
+
+	if (closeFile) {
+		fclose(outFile);
+	}
+
+	if (status == SUCCEEDED) {
+		logDebugging(_logger, "Code generation completed.");
+	}
+	else {
+		logError(_logger, "Code generation failed.");
+	}
+
+	return status;
+}
