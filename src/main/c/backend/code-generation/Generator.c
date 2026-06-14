@@ -671,6 +671,12 @@ static CompilationStatus generateProgram(GeneratorContext * ctx, Program * progr
 		output(ctx, "#include <Servo.h>\n");
 	}
 	output(ctx, "\n");
+	output(ctx, "// ============================================================\n");
+	output(ctx, "// EZduino Generated Code\n");
+	output(ctx, "// DO NOT EDIT the generated sections manually.\n");
+	output(ctx, "// You can add custom code in the marked extension points.\n");
+	output(ctx, "// ============================================================\n");
+	output(ctx, "\n");
 
 	if (hardware != NULL) {
 		for (HardwareDeclList * node = hardware->declarations; node != NULL; node = node->next) {
@@ -728,6 +734,8 @@ static CompilationStatus generateProgram(GeneratorContext * ctx, Program * progr
 			}
 		}
 	}
+	indent(ctx);
+	output(ctx, "// === Add custom setup code here ===\n");
 	ctx->indent = 0;
 	output(ctx, "}\n\n");
 
@@ -736,6 +744,8 @@ static CompilationStatus generateProgram(GeneratorContext * ctx, Program * progr
 	if (routine != NULL) {
 		generateLoopBody(ctx, routine->stmts);
 	}
+	indent(ctx);
+	output(ctx, "// === Add custom loop code here ===\n");
 	output(ctx, "}\n");
 
 	return SUCCEEDED;
