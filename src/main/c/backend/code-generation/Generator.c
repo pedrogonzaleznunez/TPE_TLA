@@ -370,18 +370,12 @@ static void generateMethodCall(
 }
 
 static const char * varTypeFromExpr(Expr * expr) {
-	if (expr == NULL) {
-		return "int";
-	}
-	switch (expr->type) {
-		case EXPR_FLOAT:
-			return "float";
-		case EXPR_STRING:
-			return "String";
-		case EXPR_BOOL:
-			return "bool";
-		default:
-			return "int";
+	if (expr == NULL) return "int";
+	switch (expr->resolvedType) {
+		case TYPE_FLOAT:  return "float";
+		case TYPE_STRING: return "String";
+		case TYPE_BOOL:   return "bool";
+		default:          return "int";
 	}
 }
 
@@ -599,13 +593,36 @@ static void generateSetupForDecl(GeneratorContext * ctx, HardwareDecl * decl) {
 	free(upper);
 }
 
+static bool isLiteralExpr(Expr * expr) {
+	if (expr == NULL) return true;
+	switch (expr->type) {
+		case EXPR_INTEGER:
+		case EXPR_FLOAT:
+		case EXPR_BOOL:
+		case EXPR_STRING:
+		case EXPR_TIME:
+			return true;
+		default:
+			return false;
+	}
+}
+
 static void generateRoutineGlobals(GeneratorContext * ctx, StmtList * stmts) {
 	for (StmtList * node = stmts; node != NULL; node = node->next) {
 		Stmt * stmt = node->stmt;
-		if (stmt != NULL && stmt->type == STMT_VAR) {
-			output(ctx, "%s %s = ", varTypeFromExpr(stmt->var.value), stmt->var.name);
+		if (stmt == NULL || stmt->type != STMT_VAR) continue;
+		const char * type = varTypeFromExpr(stmt->var.value);
+		if (isLiteralExpr(stmt->var.value)) {
+			output(ctx, "%s %s = ", type, stmt->var.name);
 			generateExpr(ctx, stmt->var.value);
 			output(ctx, ";\n");
+		} else {
+			switch (stmt->var.value->resolvedType) {
+				case TYPE_FLOAT:  output(ctx, "float %s = 0.0;\n", stmt->var.name); break;
+				case TYPE_BOOL:   output(ctx, "bool %s = false;\n", stmt->var.name); break;
+				case TYPE_STRING: output(ctx, "String %s = \"\";\n", stmt->var.name); break;
+				default:          output(ctx, "int %s = 0;\n", stmt->var.name); break;
+			}
 		}
 	}
 }
@@ -617,7 +634,14 @@ static void generateLoopBody(GeneratorContext * ctx, StmtList * stmts) {
 			continue;
 		}
 		if (stmt->type == STMT_VAR) {
-			/* top-level routine vars are emitted as globals */
+			Expr * val = stmt->var.value;
+			bool isRuntimeInit = (val != NULL && !isLiteralExpr(val));
+			if (isRuntimeInit) {
+				indent(ctx);
+				output(ctx, "%s = ", stmt->var.name);
+				generateExpr(ctx, val);
+				output(ctx, ";\n");
+			}
 			continue;
 		}
 		generateStmt(ctx, stmt);
