@@ -253,6 +253,18 @@ SymbolEntry * lookupSymbol(SymbolTable * table, const char * name) {
 		}
 	}
 
+	if (table->preserve) {
+		unsigned int idx = hashString(name, table->bucketCount);
+		SymbolEntry * entry = table->buckets[idx];
+		while (entry != NULL) {
+			if (strcmp(entry->name, name) == 0 &&
+				entry->scopeLevel <= table->currentScopeLevel) {
+				return entry;
+			}
+			entry = entry->next;
+		}
+	}
+
 	logDebugging(table->logger,
 		"lookupSymbol: '%s' not found in any scope", name);
 	return NULL;
