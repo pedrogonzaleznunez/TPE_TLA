@@ -122,6 +122,14 @@ El nombre del componente o variable (`NAME`) se convierte a mayúsculas para los
 | `dht11` | `dht11 NAME on PIN;` | `#include <DHT.h>` + `#define PIN_NAME PIN` + `DHT NAME(PIN_NAME, DHT11);` | `NAME.begin();` |
 | `lcd` | `lcd NAME on (rs:R, en:E, d4:D4, d5:D5, d6:D6, d7:D7);` | `#include <LiquidCrystal.h>` + `#define PIN_NAME_rs R` … `#define PIN_NAME_d7 D7` + `LiquidCrystal NAME(PIN_NAME_rs, …);` | `NAME.begin(16, 2);` |
 
+### Métodos del LCD
+
+| Método EZduino | C++ generado | Descripción |
+| --- | --- | --- |
+| `NAME.print(valor)` | `NAME.print(valor)` | Imprime texto o variables en el LCD |
+| `NAME.clear()` | `NAME.clear()` | Limpia la pantalla del LCD |
+| `NAME.set_cursor(col, row)` | `NAME.setCursor(col, row)` | Posiciona el cursor en columna y fila |
+
 ### Variables en routine
 
 | Caso | EZduino de entrada | C++ generado (global) | C++ generado (loop) |

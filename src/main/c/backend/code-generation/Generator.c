@@ -362,6 +362,11 @@ static void generateMethodCall(
 	else if (strcmp(method, "clear") == 0) {
 		output(ctx, "%s.clear()", object);
 	}
+	else if (strcmp(method, "set_cursor") == 0) {
+		output(ctx, "%s.setCursor(", object);
+		generateArgList(ctx, args);
+		output(ctx, ")");
+	}
 	else if (asStatement) {
 		output(ctx, "/* unknown method %s.%s */", object, method);
 	}

@@ -1,0 +1,11 @@
+// Cubre: LCD con set_cursor
+hardware {
+    lcd screen on (rs: 12, en: 11, d4: 5, d5: 4, d6: 3, d7: 2);
+}
+routine {
+    screen.clear();
+    screen.set_cursor(0, 0);
+    screen.print("Line 1");
+    screen.set_cursor(1, 0);
+    screen.print("Line 2");
+}

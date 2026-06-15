@@ -99,9 +99,10 @@ static const ComponentMethodTable COMPONENT_METHODS[] = {
 		{ "temperature",   TYPE_FLOAT, 0, {} },
 		{ "humidity",      TYPE_FLOAT, 0, {} },
 	}},
-	{ COMP_LCD,           "LCD",           2, {
+	{ COMP_LCD,           "LCD",           3, {
 		{ "print",         TYPE_VOID, -1, {} },
 		{ "clear",         TYPE_VOID,  0, {} },
+		{ "set_cursor",    TYPE_VOID,  2, { TYPE_INT, TYPE_INT } },
 	}},
 };
 
